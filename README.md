@@ -13,7 +13,7 @@
 
 ### 🚀 **[https://curiouskernel.github.io/Axiom-EMS/](https://curiouskernel.github.io/Axiom-EMS/)**
 
-*Fully functional interactive emergency response web application running in-browser with real GPS routes, Scikit-ensemble ETA forecasting, and two-stage intersection preemption alerts.*
+*Working interactive emergency mobility model featuring real Delhi arterial corridors, live regression-based ETA calculations, and two-stage intersection preemption alerts.*
 
 ---
 
@@ -27,39 +27,19 @@
 
 ## Key Features
 
-- **Ambulance location tracking and ETA estimation**: Continuous tracking across arterial corridors with dynamic mathematical modeling for ETA under congestion.
-- **Congestion and route-risk awareness**: Evaluates road conditions, peak traffic factors, and risk tiers (LOW, MODERATE, HIGH, CRITICAL).
+- **Ambulance location tracking and ETA estimation**: Continuous tracking across arterial corridors with dynamic mathematical modeling for ETA under real-time congestion.
+- **Congestion and route-risk awareness**: Live road status profiling, rush-hour volume adjustments, and dynamic risk tiers (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`).
 - **Two-stage intersection alerts: approaching and arrived**:
-  - *Stage 1 (Approaching)*: Signals traffic units when the emergency vehicle enters the dynamic lead threshold (< 750m) with PA voice notices.
-  - *Stage 2 (Arrived)*: Detects junction threshold (< 100m) to hold cross-traffic, confirm passage, and restore phasing.
-- **IoT-based roadside alert integration**: RSU node simulation providing real-time speaker audio feeds and signal status displays.
-- **Traffic police monitoring and acknowledgement**: Dedicated dashboard with 1-click SOP clearance, corridor preparation, and manual hold signal overrides.
-- **Proposed TinyFish integration**: Specialized intelligence module for retrieving relevant public road-closure notices, municipal permits, and transport advisories.
-
----
-
-## System Architecture
-
-```
-   [ Emergency Vehicle GPS Telemetry ]
-                   │
-                   ▼
-  ┌────────────────────────────────────────────────────────┐
-  │                 AXIOM EMS Core Engine                  │
-  ├────────────────────────┬───────────────────────────────┤
-  │  AI/ML ETA Regressor   │  Two-Stage Alert Coordinator  │
-  └──────────────┬─────────┴───────────────┬───────────────┘
-                 │                         │
-      ┌──────────┴──────────┐   ┌──────────┴──────────┐
-      ▼                     ▼   ▼                     ▼
-[ Leaflet HUD Map ]   [ IoT Nodes ] [ Police Console ][ TinyFish Feed ]
-```
+  - *Stage 1 (Approaching)*: Signals traffic units when the ambulance enters the lead threshold ($< 750\text{ m}$) with PA voice notices and advance advisories.
+  - *Stage 2 (Arrived)*: Detects junction threshold arrival ($< 100\text{ m}$) to hold cross-traffic, verify clear passage, and restore normal signal phasing.
+- **IoT-based roadside alert integration**: Simulated RSU nodes displaying live states, acoustic announcements, and signal preemption flags.
+- **Traffic police monitoring and acknowledgement**: Tactical operations console allowing duty officers to acknowledge corridor clearance and trigger manual signal hold overrides.
 
 ---
 
 ## Prototype Notice
 
-*Note: The project prototype includes a simulated workflow. Live traffic feeds, physical IoT integration, and external data integrations require implementation and validation.*
+*Note: The project prototype includes a simulated workflow. Live traffic feeds and physical IoT integration require implementation and validation.*
 
 ---
 

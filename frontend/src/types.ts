@@ -11,8 +11,8 @@ export interface IntersectCheckpoint {
   alertStage: AlertStage;
   trafficStatus: 'NORMAL' | 'PREPARING' | 'PREEMPTED' | 'RESTORED';
   rsuStatus: 'ONLINE' | 'ACTIVE_ALERT' | 'STANDBY';
-  approachingTriggerKm: number; // e.g. 0.8 km
-  arrivedTriggerKm: number;     // e.g. 0.1 km
+  approachingTriggerKm: number; // threshold e.g. 0.8 km
+  arrivedTriggerKm: number;     // threshold e.g. 0.1 km
   etaSeconds: number | null;
   policeAcknowledged: boolean;
   speakerAnnouncement: string;
@@ -34,17 +34,6 @@ export interface AmbulanceState {
   activeRisk: RiskLevel;
   roadConditions: string;
   status: 'DISPATCHED' | 'EN_ROUTE' | 'ARRIVED_DESTINATION' | 'PAUSED';
-}
-
-export interface AdvisoryNotice {
-  id: string;
-  source: string; // 'TinyFish Traffic Intelligence' | 'Delhi Transport Dept' | 'Citizen Incident'
-  title: string;
-  description: string;
-  severity: 'INFO' | 'WARNING' | 'CRITICAL';
-  corridor: string;
-  timestamp: string;
-  impactScore: number; // 0 - 100
 }
 
 export interface TransitEventLog {

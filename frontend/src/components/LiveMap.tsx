@@ -33,43 +33,43 @@ export const LiveMap: React.FC<LiveMapProps> = ({
       attributionControl: false
     });
 
-    // Dark sleek map tiles (CartoDB Dark Matter)
+    // Dark high-contrast CartoDB map tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd'
     }).addTo(map);
 
-    // Draw Route Polyline
+    // Corridor Route Polyline
     L.polyline(waypoints, {
-      color: '#0891b2',
-      weight: 5,
-      opacity: 0.6,
-      dashArray: '8, 8'
+      color: '#38bdf8',
+      weight: 6,
+      opacity: 0.8,
+      dashArray: '6, 8'
     }).addTo(map);
 
-    // Initial Ambulance Marker
+    // Dynamic Pulsing Ambulance Marker
     const ambIcon = L.divIcon({
-      className: 'custom-amb-icon',
+      className: 'amb-pulse-marker',
       html: `
         <div style="
-          width: 38px; height: 38px; 
-          background: #ef4444; 
-          border: 2px solid #ffffff; 
-          border-radius: 50%; 
-          display: flex; align-items: center; justify-content: center; 
-          box-shadow: 0 0 16px #ef4444; 
-          color: white; font-weight: bold; font-size: 16px;
-          animation: pulse 1s infinite alternate;
+          width: 40px; height: 40px;
+          background: #ef4444;
+          border: 3px solid #ffffff;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 20px #ef4444;
+          font-size: 18px;
+          cursor: pointer;
         ">
           🚑
         </div>
       `,
-      iconSize: [38, 38],
-      iconAnchor: [19, 19]
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
     });
 
     const ambMarker = L.marker([ambulance.currentLat, ambulance.currentLng], { icon: ambIcon }).addTo(map);
-    ambMarker.bindPopup(`<b>${ambulance.callsign}</b><br/>En route to ${ambulance.destination}`);
+    ambMarker.bindPopup(`<b>${ambulance.callsign}</b><br/>En Route: ${ambulance.destination}`);
     ambulanceMarkerRef.current = ambMarker;
 
     mapInstanceRef.current = map;
@@ -80,20 +80,20 @@ export const LiveMap: React.FC<LiveMapProps> = ({
     };
   }, []);
 
-  // Update Ambulance position
+  // Update Ambulance Position on map
   useEffect(() => {
     if (ambulanceMarkerRef.current) {
       ambulanceMarkerRef.current.setLatLng([ambulance.currentLat, ambulance.currentLng]);
     }
   }, [ambulance.currentLat, ambulance.currentLng]);
 
-  // Update / Render Checkpoint Markers
+  // Update Intersections Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     checkpoints.forEach(cp => {
-      let markerColor = '#3b82f6'; // default blue
+      let markerColor = '#0284c7'; // default blue
       let badgeLabel = 'IDLE';
 
       if (cp.alertStage === 'APPROACHING') {
@@ -101,7 +101,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
         badgeLabel = 'STAGE 1: ADVANCE';
       } else if (cp.alertStage === 'ARRIVED') {
         markerColor = '#ef4444'; // Red Stage 2
-        badgeLabel = 'STAGE 2: ARRIVED';
+        badgeLabel = 'STAGE 2: PREEMPT';
       } else if (cp.alertStage === 'CLEARED') {
         markerColor = '#10b981'; // Green
         badgeLabel = 'CLEARED';
@@ -110,30 +110,30 @@ export const LiveMap: React.FC<LiveMapProps> = ({
       const isSelected = cp.id === selectedCheckpointId;
 
       const cpIcon = L.divIcon({
-        className: `custom-rsu-icon-${cp.id}`,
+        className: `custom-rsu-${cp.id}`,
         html: `
           <div style="
-            background: #0f1f3d;
+            background: #0b172a;
             border: 2px solid ${markerColor};
             border-radius: 6px;
             padding: 3px 6px;
-            color: white;
-            font-size: 11px;
+            color: #ffffff;
+            font-size: 10px;
             font-family: monospace;
             white-space: nowrap;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 0 ${isSelected ? '16px' : '8px'} ${markerColor};
+            box-shadow: 0 0 ${isSelected ? '16px' : '6px'} ${markerColor};
             transform: translate(-50%, -50%);
             cursor: pointer;
           ">
-            <span style="font-weight: bold; color: ${markerColor};">${cp.id}</span>
-            <span style="font-size: 9px; opacity: 0.9;">${badgeLabel}</span>
+            <span style="font-weight: 700; color: ${markerColor};">${cp.id}</span>
+            <span style="font-size: 8px; opacity: 0.9;">${badgeLabel}</span>
           </div>
         `,
-        iconSize: [80, 36],
-        iconAnchor: [40, 18]
+        iconSize: [75, 34],
+        iconAnchor: [37, 17]
       });
 
       if (!checkpointMarkersRef.current.has(cp.id)) {
@@ -150,21 +150,21 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   }, [checkpoints, selectedCheckpointId, onSelectCheckpoint]);
 
   return (
-    <div className="relative w-full h-[450px] rounded-xl overflow-hidden border border-[#1e3a5f] shadow-2xl bg-[#0a1628]">
+    <div className="relative w-full h-[480px] rounded-xl overflow-hidden border border-[#1e3a5f] shadow-2xl bg-[#0a1628]">
       <div ref={mapContainerRef} className="w-full h-full" />
       
-      {/* Overlay Status Badge */}
-      <div className="absolute top-3 left-3 z-[1000] bg-[#0a1628]/90 backdrop-blur-md px-3 py-2 rounded-lg border border-[#1e3a5f] text-xs font-mono flex items-center gap-3">
+      {/* Top Floating Badge */}
+      <div className="absolute top-3 left-3 z-[1000] bg-[#0b172a]/90 backdrop-blur px-3 py-2 rounded-lg border border-[#1e3a5f] text-xs font-mono flex items-center gap-3">
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
           <span className="text-cyan-300 font-semibold">DELHI HIGH-PRIORITY CORRIDOR</span>
         </span>
-        <span className="text-slate-400">|</span>
-        <span className="text-amber-400">RSU Units: {checkpoints.length} Online</span>
+        <span className="text-slate-500">|</span>
+        <span className="text-emerald-400 font-semibold">{checkpoints.length} RSU Nodes Connected</span>
       </div>
 
-      <div className="absolute bottom-3 right-3 z-[1000] bg-[#0a1628]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1e3a5f] text-[10px] text-slate-400 font-mono">
-        CartoDB Dark • Real GPS Waypoints
+      <div className="absolute bottom-3 right-3 z-[1000] bg-[#0b172a]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-[#1e3a5f] text-[10px] text-slate-400 font-mono">
+        CartoDB Dark • Real Coordinates
       </div>
     </div>
   );

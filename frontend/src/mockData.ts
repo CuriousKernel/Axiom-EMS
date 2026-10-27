@@ -1,27 +1,27 @@
-import { IntersectCheckpoint, AdvisoryNotice } from './types';
+import { IntersectCheckpoint } from './types';
 
-// Real geographic route in New Delhi: Connaught Place -> AIIMS via Ring Road & Barakhamba
+// Genuine Delhi arterial corridor from Connaught Place to AIIMS
 export const DELHI_CORRIDOR_WAYPOINTS: [number, number][] = [
-  [28.6328, 77.2195], // 0: CP Outer Circle (Origin)
-  [28.6315, 77.2250], // 1: Barakhamba Road
-  [28.6290, 77.2300], // 2: Barakhamba towards Mandi House
-  [28.6258, 77.2343], // 3: Mandi House Roundabout
-  [28.6270, 77.2380], // 4: Tilak Marg
-  [28.6288, 77.2415], // 5: ITO Junction
-  [28.6240, 77.2430], // 6: Ring Road Southbound
-  [28.6180, 77.2440], // 7: Bhairon Marg / Pragati Maidan
-  [28.6050, 77.2470], // 8: Sarai Kale Khan Corridor
-  [28.5850, 77.2520], // 9: Nizamuddin Flyover
-  [28.5708, 77.2600], // 10: Ashram Chowk
-  [28.5680, 77.2450], // 11: Ring Road / Lajpat Nagar
-  [28.5668, 77.2340], // 12: Moolchand Underpass
-  [28.5660, 77.2220], // 13: South Extension
-  [28.5672, 77.2100], // 14: AIIMS Trauma Center (Destination)
+  [28.6328, 77.2195], // Connaught Place Inner/Outer Circle
+  [28.6315, 77.2250], // Barakhamba Road
+  [28.6290, 77.2300], // Barakhamba approaching Mandi House
+  [28.6258, 77.2343], // Mandi House Roundabout
+  [28.6270, 77.2380], // Tilak Marg
+  [28.6288, 77.2415], // ITO Junction
+  [28.6240, 77.2430], // Ring Road Southbound
+  [28.6180, 77.2440], // Bhairon Marg / Pragati Maidan
+  [28.6050, 77.2470], // Sarai Kale Khan
+  [28.5850, 77.2520], // Nizamuddin Flyover
+  [28.5708, 77.2600], // Ashram Chowk
+  [28.5680, 77.2450], // Ring Road / Lajpat Nagar
+  [28.5668, 77.2340], // Moolchand Underpass
+  [28.5660, 77.2220], // South Extension
+  [28.5672, 77.2100], // AIIMS Trauma Center (Destination)
 ];
 
 export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
   {
-    id: 'RSU-DEL-01',
+    id: 'RSU-01',
     name: 'Barakhamba Road Junction',
     lat: 28.6315,
     lng: 77.2250,
@@ -29,15 +29,15 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     alertStage: 'IDLE',
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
-    approachingTriggerKm: 0.65,
-    arrivedTriggerKm: 0.08,
+    approachingTriggerKm: 0.70,
+    arrivedTriggerKm: 0.10,
     etaSeconds: null,
     policeAcknowledged: false,
     speakerAnnouncement: 'RSU Standby. Monitoring priority lane.',
-    lastUpdated: 'Just now'
+    lastUpdated: 'Live'
   },
   {
-    id: 'RSU-DEL-02',
+    id: 'RSU-02',
     name: 'Mandi House Roundabout',
     lat: 28.6258,
     lng: 77.2343,
@@ -45,15 +45,15 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     alertStage: 'IDLE',
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
-    approachingTriggerKm: 0.70,
-    arrivedTriggerKm: 0.09,
+    approachingTriggerKm: 0.75,
+    arrivedTriggerKm: 0.10,
     etaSeconds: null,
     policeAcknowledged: false,
     speakerAnnouncement: 'RSU Standby.',
-    lastUpdated: 'Just now'
+    lastUpdated: 'Live'
   },
   {
-    id: 'RSU-DEL-03',
+    id: 'RSU-03',
     name: 'ITO Major Intersection',
     lat: 28.6288,
     lng: 77.2415,
@@ -62,14 +62,14 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
     approachingTriggerKm: 0.80,
-    arrivedTriggerKm: 0.10,
+    arrivedTriggerKm: 0.12,
     etaSeconds: null,
     policeAcknowledged: false,
     speakerAnnouncement: 'RSU Standby.',
-    lastUpdated: 'Just now'
+    lastUpdated: 'Live'
   },
   {
-    id: 'RSU-DEL-04',
+    id: 'RSU-04',
     name: 'Pragati Maidan / Bhairon Marg',
     lat: 28.6180,
     lng: 77.2440,
@@ -78,14 +78,14 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
     approachingTriggerKm: 0.75,
-    arrivedTriggerKm: 0.08,
+    arrivedTriggerKm: 0.10,
     etaSeconds: null,
     policeAcknowledged: false,
     speakerAnnouncement: 'RSU Standby.',
-    lastUpdated: 'Just now'
+    lastUpdated: 'Live'
   },
   {
-    id: 'RSU-DEL-05',
+    id: 'RSU-05',
     name: 'Ashram Chowk Underpass',
     lat: 28.5708,
     lng: 77.2600,
@@ -94,14 +94,14 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
     approachingTriggerKm: 0.90,
-    arrivedTriggerKm: 0.12,
+    arrivedTriggerKm: 0.14,
     etaSeconds: null,
     policeAcknowledged: false,
     speakerAnnouncement: 'RSU Standby.',
-    lastUpdated: 'Just now'
+    lastUpdated: 'Live'
   },
   {
-    id: 'RSU-DEL-06',
+    id: 'RSU-06',
     name: 'AIIMS Flyover / Aurobindo Marg',
     lat: 28.5672,
     lng: 77.2100,
@@ -109,44 +109,11 @@ export const INITIAL_CHECKPOINTS: IntersectCheckpoint[] = [
     alertStage: 'IDLE',
     trafficStatus: 'NORMAL',
     rsuStatus: 'ONLINE',
-    approachingTriggerKm: 0.65,
-    arrivedTriggerKm: 0.08,
+    approachingTriggerKm: 0.75,
+    arrivedTriggerKm: 0.10,
     etaSeconds: null,
     policeAcknowledged: false,
-    speakerAnnouncement: 'RSU Standby. ER Gate Standby.',
-    lastUpdated: 'Just now'
-  }
-];
-
-export const INITIAL_ADVISORIES: AdvisoryNotice[] = [
-  {
-    id: 'ADV-TF-101',
-    source: 'Proposed TinyFish Integration',
-    title: 'Advisory: Construction Diversion on Outer Ring Road',
-    description: 'Real-time transit advisory parsed from civic transport notice: Metro construction near Ashram creates 1.4x bottleneck on left lane.',
-    severity: 'WARNING',
-    corridor: 'Ashram - Sarai Kale Khan',
-    timestamp: '12m ago',
-    impactScore: 68
-  },
-  {
-    id: 'ADV-TF-102',
-    source: 'Delhi Traffic Police Notification',
-    title: 'VIP Movement Clearance: Mathura Road Corridor',
-    description: 'Temporary diversion lifted. Advance green corridor reservation granted for ambulance CALLSIGN DEL-AMB-09.',
-    severity: 'INFO',
-    corridor: 'ITO - Pragati Maidan',
-    timestamp: '25m ago',
-    impactScore: 25
-  },
-  {
-    id: 'ADV-TF-103',
-    source: 'Proposed TinyFish Integration',
-    title: 'Public Notice: Waterlogged Underpass Alert',
-    description: 'Advisory extraction: Localized waterlogging reduced clearance speed at Moolchand Underpass. AI model auto-rerouted to flyover.',
-    severity: 'CRITICAL',
-    corridor: 'Moolchand - South Extension',
-    timestamp: '42m ago',
-    impactScore: 82
+    speakerAnnouncement: 'RSU Standby. Emergency Gate Ready.',
+    lastUpdated: 'Live'
   }
 ];
