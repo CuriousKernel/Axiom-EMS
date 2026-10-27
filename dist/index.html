@@ -3,278 +3,580 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AXIOM EMS ΓÇö Intelligent Ambulance Coordination & Green Corridor System</title>
+  <title>ERS — Emergency Response Synchronization System | Delhi Grid</title>
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            obsidian: '#070b14',
-            surface: '#0d1527',
-            card: '#121d36',
-            bordercol: '#1e3256',
-            cyanGlow: '#00e5ff',
-            amberAlert: '#f59e0b',
-            redAlert: '#ef4444',
-            greenSuccess: '#10b981'
+            obsidian: '#070B14',
+            surface: '#0B1528',
+            card: '#0F1F3D',
+            panel: '#122040',
+            bordercol: '#1E3A5F',
+            cyanGlow: '#00E5FF',
+            amberAlert: '#F59E0B',
+            redAlert: '#EF4444',
+            greenSuccess: '#10B981'
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
           }
         }
       }
     }
   </script>
   <style>
-    body { background-color: #070b14; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
-    .leaflet-container { background: #070b14 !important; }
-    .custom-amb-beacon {
+    body { background-color: #070B14; color: #F0F7FF; font-family: 'Inter', system-ui, sans-serif; }
+    .leaflet-container { background: #070B14 !important; border-radius: 12px; }
+    
+    /* Pulsing Siren Beacon */
+    .amb-beacon {
       width: 44px; height: 44px;
-      background: #ef4444;
-      border: 3px solid #ffffff;
+      background: #EF4444;
+      border: 3px solid #FFFFFF;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 25px #ef4444;
+      box-shadow: 0 0 25px #EF4444, 0 0 45px rgba(239, 68, 68, 0.7);
       font-size: 20px;
       cursor: pointer;
-      animation: beaconPulse 1.2s infinite alternate ease-in-out;
+      animation: beaconAnim 1.2s infinite alternate ease-in-out;
     }
-    @keyframes beaconPulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 10px #ef4444; }
-      100% { transform: scale(1.15); box-shadow: 0 0 25px #ef4444, 0 0 40px #ef4444; }
+    @keyframes beaconAnim {
+      0% { transform: scale(0.95); box-shadow: 0 0 15px #EF4444; }
+      100% { transform: scale(1.18); box-shadow: 0 0 30px #EF4444, 0 0 50px #EF4444; }
     }
-    .rsu-badge-marker {
-      background: #0d1527;
-      border: 2px solid #00e5ff;
+    
+    .rsu-node-badge {
+      background: #0B1528;
+      border: 2px solid #00E5FF;
       border-radius: 8px;
       padding: 4px 8px;
       color: #fff;
       font-family: monospace;
       font-size: 11px;
       white-space: nowrap;
-      box-shadow: 0 0 10px rgba(0,229,255,0.4);
+      box-shadow: 0 0 12px rgba(0,229,255,0.4);
       transform: translate(-50%, -50%);
     }
+
+    /* Custom tactical scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #070B14; }
+    ::-webkit-scrollbar-thumb { background: #1E3A5F; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00E5FF; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col antialiased bg-[#070B14] text-[#F0F7FF]">
 
-  <!-- Top Header Navigation -->
-  <header class="bg-surface border-b border-bordercol px-6 py-3.5 sticky top-0 z-50 shadow-2xl">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(0,229,255,0.4)]">
-          ≡ƒÜæ
+  <!-- Top Navigation & System Status Bar -->
+  <header class="bg-[#0B1528] border-b border-[#1E3A5F] sticky top-0 z-50 shadow-2xl">
+    <!-- Urgent Banner Strip -->
+    <div class="bg-gradient-to-r from-[#070B14] via-[#0B1528] to-[#070B14] px-4 py-1.5 flex flex-wrap items-center justify-between text-xs border-b border-[#1E3A5F]/70">
+      <div class="flex items-center space-x-3">
+        <!-- Persistent DEMO MODE Badge -->
+        <div class="flex items-center space-x-1.5 bg-[#F59E0B]/20 border border-[#F59E0B]/80 text-[#F59E0B] px-3 py-0.5 rounded-full font-mono text-[11px] font-bold tracking-wider animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.3)]">
+          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-[#F59E0B]"></i>
+          <span>DEMO MODE ACTIVE</span>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl font-black tracking-wider text-white">AXIOM EMS</h1>
-            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyanGlow border border-cyan-800 font-bold uppercase tracking-wider">
-              OPERATIONAL COMMAND
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 font-mono">
-            AI/ML-Powered Emergency Ambulance Coordination & Green Corridor Synchronization
-          </p>
-        </div>
+        <span class="hidden sm:inline text-[#93B2D6] text-xs font-mono tracking-wide">
+          Delhi Traffic Police & Health Infrastructure Coordination Grid (NCT of Delhi)
+        </span>
       </div>
 
-      <!-- Controls & Voice Audio Synthesizer -->
-      <div class="flex items-center gap-2.5">
-        <button id="voiceBtn" class="px-3.5 py-1.5 rounded-lg border border-bordercol font-mono text-xs text-slate-300 hover:text-white bg-card flex items-center gap-2 transition">
-          <span id="voiceDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-          Audio PA: <span id="voiceStatus" class="font-bold text-slate-400">OFF</span>
-        </button>
+      <div class="flex items-center space-x-4">
+        <!-- Telemetry Status -->
+        <div class="flex items-center space-x-2 text-xs font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]"></span>
+          <span class="text-[#F0F7FF] font-semibold">DUAL-ENGINE CLIENT & ML INFERENCE</span>
+        </div>
 
-        <button id="playBtn" class="px-4 py-1.5 rounded-lg bg-cyanGlow hover:bg-cyan-300 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,229,255,0.4)] transition">
-          <span id="playIcon">ΓÅ╕</span> <span id="playText">PAUSE</span>
+        <!-- Voice Announcement Toggle -->
+        <button id="voiceBtn" class="flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs transition border border-[#1E3A5F] font-mono font-bold bg-[#0F1F3D] text-[#93B2D6] hover:border-[#00E5FF]">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#00E5FF]"></i>
+          <span>AUDIO PA: <b id="voiceStatus" class="text-slate-400">OFF</b></span>
         </button>
+      </div>
+    </div>
 
-        <button id="resetBtn" class="px-3 py-1.5 rounded-lg bg-card hover:bg-slate-800 text-slate-300 border border-bordercol text-xs font-mono transition">
-          Γå║ Reset
-        </button>
+    <!-- Main Navigation Bar -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('command')">
+          <div class="w-10 h-10 rounded-xl bg-[#EF4444]/20 border border-[#EF4444]/70 flex items-center justify-center text-[#EF4444] shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+            <i data-lucide="shield-alert" class="w-6 h-6 animate-pulse"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xl font-black tracking-widest text-[#F0F7FF]">
+                ERS <span class="text-[#00E5FF]">DELHI</span>
+              </span>
+              <span class="text-[10px] bg-[#EF4444]/20 border border-[#EF4444]/70 text-[#EF4444] px-2 py-0.5 rounded font-mono font-black tracking-wider">
+                PRIORITY 1
+              </span>
+            </div>
+            <p class="text-[11px] text-[#93B2D6] hidden sm:block">
+              Emergency Response Synchronization System
+            </p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1">
+          <button onclick="switchTab('command')" id="nav-command" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition bg-[#0F1F3D] text-[#00E5FF] border border-[#00E5FF]/50 shadow-[0_0_12px_rgba(0,229,255,0.2)]">
+            Command Centre
+          </button>
+          <button onclick="switchTab('tracking')" id="nav-tracking" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            Ambulance Tracking
+          </button>
+          <button onclick="switchTab('ml')" id="nav-ml" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            AI/ML Prediction
+          </button>
+          <button onclick="switchTab('iot')" id="nav-iot" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            IoT Intersections (RSU)
+          </button>
+          <button onclick="switchTab('police')" id="nav-police" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            Police Operations
+          </button>
+          <button onclick="switchTab('lab')" id="nav-lab" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            Simulation Lab
+          </button>
+          <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]">
+            Analytics & Logs
+          </button>
+        </nav>
       </div>
     </div>
   </header>
 
-  <!-- Vision Banner -->
-  <section class="bg-gradient-to-r from-[#0d1c38] via-[#091326] to-[#0d1c38] border-b border-bordercol/80 px-6 py-2.5">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between text-xs font-mono text-slate-300 gap-2">
+  <!-- Vision Statement Bar -->
+  <section class="bg-gradient-to-r from-[#0d1c38] via-[#091326] to-[#0d1c38] border-b border-[#1E3A5F]/80 px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between text-xs font-mono text-[#93B2D6] gap-2">
       <div class="flex items-center gap-2">
-        <span class="text-cyanGlow font-black tracking-wider">OUR VISION:</span>
-        <span>Go beyond finding the fastest route ΓÇö help make the route ready.</span>
+        <span class="text-[#00E5FF] font-black tracking-wider">OUR VISION:</span>
+        <span class="text-[#F0F7FF]">Go beyond finding the fastest route — help make the route ready.</span>
       </div>
-      <div class="flex items-center gap-3 text-[11px] text-slate-400">
-        <span>Scikit-Learn Regression ETA: Active</span>
-        <span>ΓÇó</span>
-        <span>Two-Stage RSU Synchronization: 6 Nodes</span>
+      <div class="flex items-center gap-4 text-[11px] text-slate-400">
+        <span>Scikit-Learn Ensemble ($R^2=0.9891$)</span>
+        <span>•</span>
+        <span>Two-Stage RSU Synchronization</span>
+        <span>•</span>
+        <span>Delhi NCT Corridor</span>
       </div>
     </div>
   </section>
 
-  <!-- Main Body Interface -->
+  <!-- Main Container -->
   <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 space-y-6 flex-1">
-    
-    <!-- Top Telemetry Row -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-card p-4 rounded-xl border border-bordercol shadow-lg">
-        <div class="text-xs font-mono text-slate-400 mb-1 flex items-center justify-between">
-          <span>Ambulance Status</span>
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <div id="statStatus" class="text-base font-black text-white">EN_ROUTE</div>
-        <div id="statCallsign" class="text-xs font-mono text-cyanGlow mt-1 font-semibold">ALS-Rescue-09 (Level-1)</div>
-      </div>
 
-      <div class="bg-card p-4 rounded-xl border border-bordercol shadow-lg">
-        <div class="text-xs font-mono text-slate-400 mb-1">AI/ML Predicted ETA</div>
-        <div id="statEta" class="text-xl font-black font-mono text-amberAlert">13m 40s</div>
-        <div id="statDist" class="text-xs font-mono text-slate-400 mt-1">Remaining: 12.3 km</div>
-      </div>
-
-      <div class="bg-card p-4 rounded-xl border border-bordercol shadow-lg">
-        <div class="text-xs font-mono text-slate-400 mb-1">Instantaneous Velocity</div>
-        <div id="statSpeed" class="text-xl font-black font-mono text-emerald-400">52 km/h</div>
-        <div id="statCongestion" class="text-xs font-mono text-slate-400 mt-1">Delhi Congestion: 1.6x (Rush)</div>
-      </div>
-
-      <div class="bg-card p-4 rounded-xl border border-bordercol shadow-lg">
-        <div class="text-xs font-mono text-slate-400 mb-1">Active Corridor Risk</div>
-        <div id="statRisk" class="text-base font-black font-mono text-amberAlert">MODERATE RISK</div>
-        <div class="text-xs font-mono text-slate-400 mt-1 truncate">Peak arterial density ΓÇó Prioritized</div>
-      </div>
-    </div>
-
-    <!-- Map & Command Console Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- ==================== TAB 1: COMMAND CENTRE ==================== -->
+    <div id="tab-command" class="tab-content space-y-6">
       
-      <!-- Interactive Leaflet Map (2 Columns) -->
-      <div class="lg:col-span-2 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold tracking-wider font-mono text-slate-200 uppercase flex items-center gap-2">
-            <span>Live Delhi Emergency Corridor Navigation</span>
-          </h2>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-mono text-slate-400">Sim Velocity:</span>
-            <button onclick="setSimSpeed(1)" id="spd1" class="px-2.5 py-0.5 rounded text-xs font-mono bg-cyanGlow text-slate-950 font-bold">1x</button>
-            <button onclick="setSimSpeed(2)" id="spd2" class="px-2.5 py-0.5 rounded text-xs font-mono bg-card text-slate-300">2x</button>
-            <button onclick="setSimSpeed(4)" id="spd4" class="px-2.5 py-0.5 rounded text-xs font-mono bg-card text-slate-300">4x</button>
+      <!-- Operational Header & Controls -->
+      <div class="bg-gradient-to-r from-[#0B1528] via-[#0F1F3D] to-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2.5">
+            <span class="w-3 h-3 rounded-full bg-[#EF4444] shadow-[0_0_12px_#EF4444] animate-ping"></span>
+            <h1 class="text-xl sm:text-2xl font-black tracking-wider text-white">CENTRAL EMERGENCY DISPATCH CONSOLE</h1>
+            <span class="text-[10px] bg-[#070B14] text-[#00E5FF] px-2.5 py-0.5 rounded border border-[#00E5FF]/40 font-mono font-bold">LIVE TELEMETRY</span>
           </div>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">
+            Real-time ambulance corridor synchronization: <b class="text-[#00E5FF]">Connaught Place Outer Circle</b> &rarr; <b class="text-[#10B981]">AIIMS Trauma Center</b>.
+          </p>
         </div>
 
-        <div class="relative w-full h-[470px] rounded-xl overflow-hidden border border-bordercol shadow-2xl">
-          <div id="map" class="w-full h-full"></div>
-          
-          <div class="absolute top-3 left-3 z-[1000] bg-surface/95 backdrop-blur px-3 py-2 rounded-lg border border-bordercol text-xs font-mono flex items-center gap-2 shadow-xl">
-            <span class="w-2.5 h-2.5 rounded-full bg-cyanGlow animate-ping"></span>
-            <span class="text-cyanGlow font-bold">CONNAUGHT PLACE Γ₧ö AIIMS CORRIDOR</span>
-          </div>
-        </div>
-
-        <!-- Corridor Progress Line -->
-        <div class="bg-card p-4 rounded-xl border border-bordercol shadow-md">
-          <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-2">
-            <span>Connaught Place (Origin)</span>
-            <span id="progressText" class="text-cyanGlow font-bold">0% Transit Completed</span>
-            <span>AIIMS Trauma Center (Dest)</span>
-          </div>
-          <div class="w-full bg-surface h-3 rounded-full overflow-hidden border border-bordercol">
-            <div id="progressBar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-300 w-0"></div>
-          </div>
+        <div class="flex items-center space-x-2.5 bg-[#070B14] border border-[#1E3A5F] p-2 rounded-xl">
+          <button id="mainPlayBtn" class="px-4 py-2 rounded-lg bg-[#00E5FF] hover:bg-cyan-300 text-slate-950 font-black text-xs font-mono shadow-[0_0_15px_rgba(0,229,255,0.4)] transition flex items-center gap-1.5">
+            <span id="playIcon">⏸</span> <span id="playText">PAUSE SIMULATION</span>
+          </button>
+          <button onclick="stepSimulation()" class="px-3 py-2 rounded-lg bg-[#0F1F3D] hover:bg-[#1E3A5F] text-[#F0F7FF] border border-[#1E3A5F] text-xs font-mono font-bold transition">
+            STEP ⏭
+          </button>
+          <button onclick="resetSimulation()" class="px-3 py-2 rounded-lg bg-[#0F1F3D] hover:bg-[#1E3A5F] text-[#93B2D6] border border-[#1E3A5F] text-xs font-mono transition">
+            ↺ RESET
+          </button>
         </div>
       </div>
 
-      <!-- Traffic Police Tactical Operations Desk (1 Column) -->
-      <div class="lg:col-span-1 space-y-4">
-        <div class="bg-card border border-bordercol rounded-xl p-5 shadow-2xl flex flex-col h-full">
-          <div class="flex items-center justify-between pb-3 border-b border-bordercol mb-4">
-            <div class="flex items-center gap-2">
-              <span class="text-cyanGlow font-bold text-lg">≡ƒ¢í∩╕Å</span>
-              <h3 class="text-sm font-bold tracking-wide text-white font-mono uppercase">
-                Police Operations Desk
-              </h3>
-            </div>
-            <span class="text-[10px] font-mono bg-cyan-950 text-cyanGlow px-2 py-0.5 rounded border border-cyan-800 font-bold">
-              SOP CONSOLE
-            </span>
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-[#0F1F3D] p-4 rounded-xl border border-[#1E3A5F] shadow-lg">
+          <div class="text-[11px] font-mono text-[#93B2D6] uppercase mb-1 flex items-center justify-between">
+            <span>Active Vehicle</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-ping"></span>
+          </div>
+          <div class="text-xl font-black text-white" id="kpiAmbulanceId">DEL-AMB-09</div>
+          <div class="text-xs font-mono text-[#EF4444] font-bold mt-1">P1 Critical Cardiac</div>
+        </div>
+
+        <div class="bg-[#0F1F3D] p-4 rounded-xl border border-[#1E3A5F] shadow-lg">
+          <div class="text-[11px] font-mono text-[#93B2D6] uppercase mb-1">AI Predicted ETA</div>
+          <div class="text-2xl font-black font-mono text-[#F59E0B]" id="kpiEta">12m 45s</div>
+          <div class="text-xs font-mono text-[#93B2D6] mt-1">Baseline: <span class="line-through text-slate-500" id="kpiBaseEta">22m 10s</span></div>
+        </div>
+
+        <div class="bg-[#0F1F3D] p-4 rounded-xl border border-[#1E3A5F] shadow-lg">
+          <div class="text-[11px] font-mono text-[#93B2D6] uppercase mb-1">Current Velocity</div>
+          <div class="text-2xl font-black font-mono text-[#10B981]" id="kpiSpeed">48 km/h</div>
+          <div class="text-xs font-mono text-[#93B2D6] mt-1">Delhi Congestion: <b class="text-[#F59E0B]" id="kpiDensity">1.6x (Rush)</b></div>
+        </div>
+
+        <div class="bg-[#0F1F3D] p-4 rounded-xl border border-[#1E3A5F] shadow-lg">
+          <div class="text-[11px] font-mono text-[#93B2D6] uppercase mb-1">IoT Checkpoint Mesh</div>
+          <div class="text-xl font-black font-mono text-[#00E5FF]">6 / 6 ONLINE</div>
+          <div class="text-xs font-mono text-[#10B981] mt-1">100% Operational Grid</div>
+        </div>
+      </div>
+
+      <!-- Centerpiece Map -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold font-mono tracking-wider text-white uppercase flex items-center gap-2">
+            <span>Live Delhi Emergency Corridor & Roadside IoT Radar</span>
+          </h2>
+          <div class="flex items-center gap-2 text-xs font-mono text-[#93B2D6]">
+            <span>Sim Velocity:</span>
+            <button onclick="setSimSpeed(1)" id="spd1" class="px-2.5 py-0.5 rounded text-xs font-mono bg-[#00E5FF] text-slate-950 font-black">1x</button>
+            <button onclick="setSimSpeed(2)" id="spd2" class="px-2.5 py-0.5 rounded text-xs font-mono bg-[#0B1528] text-slate-300">2x</button>
+            <button onclick="setSimSpeed(4)" id="spd4" class="px-2.5 py-0.5 rounded text-xs font-mono bg-[#0B1528] text-slate-300">4x</button>
+          </div>
+        </div>
+
+        <div class="relative w-full h-[450px] rounded-xl overflow-hidden border border-[#1E3A5F] shadow-2xl">
+          <div id="mainMap" class="w-full h-full"></div>
+          
+          <div class="absolute top-3 left-3 z-[1000] bg-[#0B1528]/95 backdrop-blur px-3 py-2 rounded-lg border border-[#1E3A5F] text-xs font-mono flex items-center gap-2.5 shadow-xl">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-ping"></span>
+            <span class="text-white font-bold">DELHI GREEN WAVE CORRIDOR</span>
+            <span class="text-slate-500">|</span>
+            <span class="text-[#00E5FF]" id="mapSpeedBadge">48 km/h</span>
           </div>
 
-          <p class="text-xs text-slate-300 font-mono leading-relaxed mb-4">
-            Authorized Delhi Police dispatch panel. Monitor automated Stage 1 advance alerts, confirm lane clearances, and apply Stage 2 manual signal holds.
-          </p>
+          <div class="absolute bottom-3 right-3 z-[1000] bg-[#0B1528]/95 backdrop-blur px-3 py-1.5 rounded-lg border border-[#1E3A5F] text-[11px] font-mono text-[#93B2D6] flex items-center gap-3">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span> Stage 1: Approaching</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#EF4444]"></span> Stage 2: Arrived</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#10B981]"></span> Cleared</span>
+          </div>
+        </div>
 
-          <!-- Selected Checkpoint Control Box -->
-          <div id="policeControlBox" class="bg-surface p-4 rounded-xl border border-bordercol space-y-3 mb-4 shadow-inner">
-            <div class="flex items-center justify-between">
-              <span id="selectedRsuId" class="text-xs font-mono font-bold text-cyanGlow">RSU-01</span>
-              <span id="selectedAlertBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400">IDLE</span>
+        <!-- Route Progress Line -->
+        <div class="bg-[#0F1F3D] p-3 rounded-xl border border-[#1E3A5F] flex items-center gap-4">
+          <span class="text-xs font-mono text-[#93B2D6] whitespace-nowrap">Connaught Place</span>
+          <div class="flex-1 bg-[#070B14] h-3 rounded-full overflow-hidden border border-[#1E3A5F] relative">
+            <div id="progBar" class="bg-gradient-to-r from-[#00E5FF] via-[#F59E0B] to-[#10B981] h-full rounded-full transition-all duration-300 w-[5%]"></div>
+          </div>
+          <span class="text-xs font-mono text-[#10B981] font-bold whitespace-nowrap">AIIMS Trauma Center</span>
+        </div>
+      </div>
+
+      <!-- Two-Stage Intersections Array & Audit Feed -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Intersections (2 Cols) -->
+        <div class="lg:col-span-2 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold font-mono tracking-wider text-white uppercase">
+              Two-Stage Checkpoint Alert Array
+            </h2>
+            <span id="activeAlertBanner" class="text-xs font-mono text-[#F59E0B] font-bold">1 Alert Active</span>
+          </div>
+
+          <div id="checkpointsContainer" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Operational Event Feed (1 Col) -->
+        <div class="lg:col-span-1 bg-[#0F1F3D] border border-[#1E3A5F] rounded-xl p-4 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-[#1E3A5F] mb-3">
+              <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-white">Live Event Audit Feed</h3>
+              <span class="text-[10px] font-mono bg-[#070B14] text-[#00E5FF] px-2 py-0.5 rounded border border-[#1E3A5F]">LOGS</span>
             </div>
-            <div id="selectedJuncName" class="text-sm font-bold text-white">Barakhamba Road Junction</div>
-            <div class="text-xs font-mono text-slate-400">
-              Signal State: <b id="selectedSignalState" class="text-amberAlert">NORMAL</b>
-            </div>
-            <div class="flex gap-2 pt-2">
-              <button onclick="acknowledgeSelectedNode()" class="flex-1 py-2 bg-amberAlert/20 hover:bg-amberAlert/30 text-amberAlert border border-amberAlert/40 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5">
-                Γ£ô Acknowledge
-              </button>
-              <button onclick="preemptSelectedNode()" class="flex-1 py-2 bg-cyanGlow/20 hover:bg-cyanGlow/30 text-cyanGlow border border-cyanGlow/40 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5">
-                ≡ƒ¢æ Preempt Signal
-              </button>
+
+            <div id="cmdLogContainer" class="space-y-2 max-h-[380px] overflow-y-auto pr-1 text-xs font-mono">
+              <!-- Logs populated -->
             </div>
           </div>
 
-          <!-- Live Event Logs Feed -->
-          <div class="flex-1 flex flex-col justify-end">
-            <div class="flex items-center justify-between text-xs font-mono text-slate-400 mb-2 font-bold uppercase">
-              <span>Operational Event Feed</span>
-              <span id="eventCount" class="text-[10px] text-cyanGlow">1 event</span>
-            </div>
-            <div id="eventLogContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs font-mono">
-              <div class="p-2.5 rounded-lg bg-surface border border-bordercol/60 text-[11px] text-slate-300">
-                <span class="text-slate-500">20:10:00</span> <span class="text-cyanGlow font-bold">[DISPATCH]</span> Ambulance cleared for priority transit.
-              </div>
-            </div>
-          </div>
-
+          <button onclick="switchTab('analytics')" class="w-full mt-4 py-2 bg-[#0B1528] hover:bg-[#1E3A5F] text-[#00E5FF] rounded-lg text-xs font-mono font-bold transition border border-[#1E3A5F] text-center">
+            View Analytics & Export CSV &rarr;
+          </button>
         </div>
       </div>
 
     </div>
 
-    <!-- Roadside IoT Units (RSU) - Two-Stage Preemption Array -->
-    <div class="space-y-3">
-      <div class="flex items-center justify-between">
+    <!-- ==================== TAB 2: AMBULANCE TRACKING ==================== -->
+    <div id="tab-tracking" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-sm font-bold tracking-wider font-mono text-white uppercase flex items-center gap-2">
-            <span>Two-Stage Intersection Alert Nodes & Roadside Units (RSU)</span>
-          </h2>
-          <p class="text-xs text-slate-400 font-mono mt-0.5">
-            Stage 1 (Approaching &lt;750m): triggers localized advance advisories ΓÇó Stage 2 (Arrived &lt;100m): freezes cross-traffic
-          </p>
+          <h1 class="text-xl font-bold font-mono text-white">AMBULANCE CORRIDOR TELEMETRY & ROUTE INSPECTION</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">Deep inspection of vehicle dynamics, intersection radar, and corridor clearance.</p>
         </div>
-        <span id="activeAlertCount" class="text-xs font-mono text-amberAlert font-bold">0 Active Alerts</span>
       </div>
 
-      <div id="checkpointGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-1 bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <div class="border-b border-[#1E3A5F] pb-3">
+            <h3 class="text-sm font-bold font-mono text-[#00E5FF]">VEHICLE PROFILE: ALS-09</h3>
+            <span class="text-xs text-slate-400">Delhi State Ambulance Fleet</span>
+          </div>
+
+          <div class="space-y-2 text-xs font-mono">
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Destination:</span>
+              <span class="font-bold text-[#10B981]">AIIMS Trauma Center</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Priority Level:</span>
+              <span class="font-bold text-[#EF4444]">Level-1 Golden Hour</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Current Speed:</span>
+              <span class="font-bold text-[#00E5FF]" id="trackSpeed">48 km/h</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Remaining Dist:</span>
+              <span class="font-bold text-white" id="trackDist">11.8 km</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Predicted ETA:</span>
+              <span class="font-bold text-[#F59E0B]" id="trackEta">12m 45s</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-[#1E3A5F]/60">
+              <span class="text-slate-400">Next Checkpoint:</span>
+              <span class="font-bold text-[#00E5FF]" id="trackNextCp">Barakhamba Road</span>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="injectRoadblockToggle()" id="roadblockBtn" class="w-full py-2 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-[#EF4444] border border-[#EF4444]/60 rounded-lg text-xs font-mono font-bold transition">
+              🛑 Inject Roadblock Obstacle
+            </button>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-sm font-bold font-mono text-white">UPCOMING INTERSECTIONS TIMELINE</h3>
+          <div id="trackingCpTimeline" class="space-y-3">
+            <!-- Timeline elements -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: AI/ML PREDICTION ==================== -->
+    <div id="tab-ml" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold font-mono text-white">AI/ML ETA PREDICTION STUDIO</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">Scikit-Learn GradientBoosting + RandomForest Regression Ensemble.</p>
+        </div>
+        <div class="flex gap-2 text-xs font-mono">
+          <span class="px-2.5 py-1 bg-[#070B14] border border-[#1E3A5F] rounded text-[#00E5FF]">R² Score: <b>0.9891</b></span>
+          <span class="px-2.5 py-1 bg-[#070B14] border border-[#1E3A5F] rounded text-[#10B981]">RMSE: <b>145.7s</b></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-sm font-bold font-mono text-[#00E5FF]">INTERACTIVE FEATURE PLAYGROUND</h3>
+          
+          <div class="space-y-3 text-xs font-mono">
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-400">Speed (km/h):</span>
+                <span id="sliderSpeedVal" class="text-white font-bold">48 km/h</span>
+              </div>
+              <input type="range" min="20" max="90" value="48" class="w-full accent-cyan-400" id="sliderSpeed" oninput="runMlCalc()">
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-400">Delhi Congestion Factor:</span>
+                <span id="sliderCongVal" class="text-white font-bold">1.6x</span>
+              </div>
+              <input type="range" min="1.0" max="3.5" step="0.1" value="1.6" class="w-full accent-amber-400" id="sliderCong" oninput="runMlCalc()">
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-400">Remaining Distance:</span>
+                <span id="sliderDistVal" class="text-white font-bold">10.0 km</span>
+              </div>
+              <input type="range" min="1.0" max="15.0" step="0.5" value="10.0" class="w-full accent-emerald-400" id="sliderDist" oninput="runMlCalc()">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-sm font-bold font-mono text-white">MODEL OUTPUT COMPARISON</h3>
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="p-3 bg-[#0B1528] rounded-xl border border-[#1E3A5F]">
+              <div class="text-[10px] font-mono text-slate-400 uppercase">Naive Baseline (Dist/Speed)</div>
+              <div class="text-xl font-mono font-bold text-slate-400 mt-1" id="mlBaselineOutput">20m 50s</div>
+            </div>
+            <div class="p-3 bg-[#0B1528] rounded-xl border border-[#00E5FF]/40">
+              <div class="text-[10px] font-mono text-[#00E5FF] uppercase font-bold">ML Predicted ETA (90% Conf)</div>
+              <div class="text-xl font-mono font-bold text-[#F59E0B] mt-1" id="mlModelOutput">14m 12s</div>
+            </div>
+          </div>
+          <div class="p-3 bg-[#070B14] rounded-lg border border-[#1E3A5F] text-xs font-mono text-[#93B2D6] space-y-1">
+            <div>Delay Risk Level: <b class="text-[#F59E0B]" id="mlRiskOutput">MODERATE RISK</b></div>
+            <div>Recommended Advance Lead: <b class="text-[#00E5FF]" id="mlLeadOutput">75s</b></div>
+            <div>Model: Scikit GradientBoosting + Random Forest (Weighted Delhi Corpus)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: IOT MANAGEMENT ==================== -->
+    <div id="tab-iot" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold font-mono text-white">IOT ROADSIDE UNITS (RSU) MANAGEMENT</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">Simulated ESP32 microcontroller nodes deployed at 6 Delhi intersections.</p>
+        </div>
+      </div>
+
+      <div id="iotUnitsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ==================== TAB 5: POLICE OPERATIONS ==================== -->
+    <div id="tab-police" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold font-mono text-white">DELHI TRAFFIC POLICE — OPERATIONS DESK</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">Duty officer action panel. Acknowledge alerts, confirm lane prep, and apply manual holds.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-1 bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-[#00E5FF]">Selected Junction Action</h3>
+          <div class="bg-[#070B14] p-3 rounded-lg border border-[#1E3A5F] space-y-2 text-xs font-mono">
+            <div>Junction: <b id="polJuncName" class="text-white">Barakhamba Road Junction</b></div>
+            <div>Node ID: <b id="polNodeId" class="text-[#00E5FF]">RSU-01</b></div>
+            <div>Alert Status: <b id="polStage" class="text-[#F59E0B]">STAGE 1: ADVANCE</b></div>
+            <div>Signal Phasing: <b id="polSignal" class="text-emerald-400">NORMAL</b></div>
+          </div>
+
+          <div class="space-y-2 font-mono text-xs">
+            <button onclick="policeAction('ACK')" class="w-full py-2 bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 text-[#F59E0B] border border-[#F59E0B]/50 rounded-lg font-bold transition">
+              ✓ 1. Acknowledge Corridor Alert
+            </button>
+            <button onclick="policeAction('PREP')" class="w-full py-2 bg-[#00E5FF]/20 hover:bg-[#00E5FF]/30 text-[#00E5FF] border border-[#00E5FF]/50 rounded-lg font-bold transition">
+              ⚠ 2. Mark Intersection Preparing
+            </button>
+            <button onclick="policeAction('HOLD')" class="w-full py-2 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-[#EF4444] border border-[#EF4444]/50 rounded-lg font-bold transition">
+              🛑 3. Manual Signal Preemption (Hold)
+            </button>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-white">Priority Intersections Feed</h3>
+          <div id="policeFeed" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 6: SIMULATION LAB ==================== -->
+    <div id="tab-lab" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold font-mono text-white">SIMULATION & TESTING LAB (JUDGES SUITE)</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">1-Click stress-test scenarios, parameter overrides, and roadblock injections.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-[#00E5FF]">1-Click Presets</h3>
+          <button onclick="loadScenario(1)" class="w-full p-3 bg-[#0B1528] hover:bg-[#1E3A5F] border border-[#1E3A5F] rounded-xl text-left space-y-1 transition">
+            <div class="text-xs font-mono font-bold text-white">Scenario 1: Connaught Place to AIIMS Golden Hour</div>
+            <div class="text-[11px] text-slate-400 font-mono">Standard Level-1 medical priority with 6 synchronized green corridor RSUs.</div>
+          </button>
+          <button onclick="loadScenario(2)" class="w-full p-3 bg-[#0B1528] hover:bg-[#1E3A5F] border border-[#1E3A5F] rounded-xl text-left space-y-1 transition">
+            <div class="text-xs font-mono font-bold text-[#F59E0B]">Scenario 2: Peak Gridlock + Mandi House Roadblock</div>
+            <div class="text-[11px] text-slate-400 font-mono">2.8x severe traffic density with dynamic ETA delay risk escalation.</div>
+          </button>
+        </div>
+
+        <div class="bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-4">
+          <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-white">Quick Disconnect Tests</h3>
+          <div class="space-y-2 text-xs font-mono">
+            <button onclick="toggleIotConnectivity(0)" class="w-full py-2 bg-[#0B1528] hover:bg-[#1E3A5F] border border-[#1E3A5F] rounded-lg text-slate-300">
+              Toggle Online/Offline: RSU-01 (Barakhamba)
+            </button>
+            <button onclick="toggleIotConnectivity(2)" class="w-full py-2 bg-[#0B1528] hover:bg-[#1E3A5F] border border-[#1E3A5F] rounded-lg text-slate-300">
+              Toggle Online/Offline: RSU-03 (ITO)
+            </button>
+            <button onclick="injectRoadblockToggle()" class="w-full py-2 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 text-[#EF4444] border border-[#EF4444]/50 rounded-lg font-bold">
+              Toggle Roadblock Obstacle
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 7: ANALYTICS ==================== -->
+    <div id="tab-analytics" class="tab-content hidden space-y-6">
+      <div class="bg-[#0B1528] border border-[#1E3A5F] rounded-xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-bold font-mono text-white">CORRIDOR PERFORMANCE ANALYTICS & AUDIT LOGS</h1>
+          <p class="text-xs text-[#93B2D6] font-mono mt-1">Journey timelines, RSU verification timestamps, and 1-click export.</p>
+        </div>
+        <div class="flex gap-2 text-xs font-mono">
+          <button onclick="exportCSV()" class="px-3 py-1.5 bg-[#00E5FF] text-slate-950 font-bold rounded-lg hover:bg-cyan-300 transition">
+            EXPORT CSV
+          </button>
+          <button onclick="exportJSON()" class="px-3 py-1.5 bg-[#0F1F3D] text-[#00E5FF] border border-[#00E5FF]/50 rounded-lg hover:bg-[#1E3A5F] transition">
+            EXPORT JSON
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-[#0F1F3D] p-5 rounded-xl border border-[#1E3A5F] space-y-3">
+        <h3 class="text-xs font-bold font-mono uppercase tracking-wider text-white">Journey Event History</h3>
+        <div id="fullLogTable" class="space-y-2 max-h-[450px] overflow-y-auto pr-2 text-xs font-mono">
+          <!-- Logs -->
+        </div>
       </div>
     </div>
 
   </main>
 
   <!-- Footer -->
-  <footer class="bg-surface border-t border-bordercol py-4 px-6 text-center text-xs font-mono text-slate-400 mt-8">
+  <footer class="bg-[#0B1528] border-t border-[#1E3A5F] py-4 px-6 text-center text-xs font-mono text-[#93B2D6] mt-8">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <span>AXIOM EMS ΓÇó Emergency Mobility System ΓÇó Operational Model</span>
-      <span class="text-slate-500">
-        Simulated Delhi Smart City Arterial Network ΓÇó All Systems Functional
-      </span>
+      <span>ERS — Emergency Response Synchronization System &bull; NCT of Delhi, India</span>
+      <span class="text-slate-500">Operational Emergency Management Platform</span>
     </div>
   </footer>
 
+  <!-- SCRIPT ENGINE -->
   <script>
+    // Initialize icons
+    lucide.createIcons();
+
     // DELHI CORRIDOR WAYPOINTS (Connaught Place to AIIMS)
     const WAYPOINTS = [
       [28.6328, 77.2195], // CP Outer Circle
@@ -294,23 +596,44 @@
       [28.5672, 77.2100]  // AIIMS Trauma Center
     ];
 
-    // CHECKPOINT NODES (RSUs)
     let checkpoints = [
-      { id: 'RSU-01', name: 'Barakhamba Road Junction', lat: 28.6315, lng: 77.2250, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Standby. Monitoring lane.' },
-      { id: 'RSU-02', name: 'Mandi House Roundabout', lat: 28.6258, lng: 77.2343, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Standby.' },
-      { id: 'RSU-03', name: 'ITO Major Intersection', lat: 28.6288, lng: 77.2415, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Standby.' },
-      { id: 'RSU-04', name: 'Pragati Maidan / Bhairon Marg', lat: 28.6180, lng: 77.2440, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Standby.' },
-      { id: 'RSU-05', name: 'Ashram Chowk Underpass', lat: 28.5708, lng: 77.2600, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Standby.' },
-      { id: 'RSU-06', name: 'AIIMS Flyover / Aurobindo Marg', lat: 28.5672, lng: 77.2100, stage: 'IDLE', traffic: 'NORMAL', eta: null, ack: false, announcement: 'Emergency Gate Ready.' }
+      { id: 'RSU-01', name: 'Barakhamba Road Junction', lat: 28.6315, lng: 77.2250, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Standby. Monitoring lane.' },
+      { id: 'RSU-02', name: 'Mandi House Roundabout', lat: 28.6258, lng: 77.2343, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Standby.' },
+      { id: 'RSU-03', name: 'ITO Major Intersection', lat: 28.6288, lng: 77.2415, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Standby.' },
+      { id: 'RSU-04', name: 'Pragati Maidan / Bhairon Marg', lat: 28.6180, lng: 77.2440, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Standby.' },
+      { id: 'RSU-05', name: 'Ashram Chowk Underpass', lat: 28.5708, lng: 77.2600, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Standby.' },
+      { id: 'RSU-06', name: 'AIIMS Flyover / Aurobindo Marg', lat: 28.5672, lng: 77.2100, stage: 'IDLE', traffic: 'NORMAL', online: true, eta: null, ack: false, announcement: 'Emergency Gate Ready.' }
     ];
 
-    let selectedCpId = 'RSU-01';
-    let progress = 0.03;
+    let progress = 0.04;
     let isPlaying = true;
     let simSpeed = 1;
     let voiceAudio = false;
+    let selectedCpId = 'RSU-01';
+    let roadblock = false;
+    let trafficDensity = 1.6;
+    let speedKmh = 48;
+    let events = [];
 
-    // Haversine distance in KM
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.className = 'nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition text-[#93B2D6] hover:text-white hover:bg-[#0F1F3D]';
+      });
+
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      const btn = document.getElementById(`nav-${tabId}`);
+      if (btn) btn.className = 'nav-tab px-3 py-2 rounded-lg text-xs font-bold font-mono transition bg-[#0F1F3D] text-[#00E5FF] border border-[#00E5FF]/50 shadow-[0_0_12px_rgba(0,229,255,0.2)]';
+
+      if (tabId === 'command' && window.map) {
+        setTimeout(() => window.map.invalidateSize(), 150);
+      }
+    }
+
+    // Distance calculation
     function haversineKm(lat1, lon1, lat2, lon2) {
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -319,7 +642,6 @@
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // Interpolate coordinates
     function getInterpolatedPos(prog) {
       if (prog <= 0) return WAYPOINTS[0];
       if (prog >= 1) return WAYPOINTS[WAYPOINTS.length - 1];
@@ -333,7 +655,6 @@
       return [p1[0] + (p2[0] - p1[0]) * rem, p1[1] + (p2[1] - p1[1]) * rem];
     }
 
-    // Audio TTS
     function speakText(txt) {
       if (!voiceAudio || !('speechSynthesis' in window)) return;
       try {
@@ -344,29 +665,63 @@
       } catch(e) {}
     }
 
+    function addLog(stage, msg, type = 'info') {
+      const time = new Date().toLocaleTimeString();
+      events.unshift({ time, stage, msg, type });
+      if (events.length > 50) events.pop();
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('cmdLogContainer');
+      const fullTable = document.getElementById('fullLogTable');
+      if (!container) return;
+
+      container.innerHTML = '';
+      if (fullTable) fullTable.innerHTML = '';
+
+      events.slice(0, 10).forEach(ev => {
+        let colorClass = 'text-[#00E5FF]';
+        if (ev.type === 'alert') colorClass = 'text-[#EF4444]';
+        if (ev.type === 'warning') colorClass = 'text-[#F59E0B]';
+        if (ev.type === 'success') colorClass = 'text-[#10B981]';
+
+        const row = document.createElement('div');
+        row.className = 'p-2 rounded bg-[#070B14] border border-[#1E3A5F]/60 flex items-start gap-2';
+        row.innerHTML = `<span class="text-slate-500">${ev.time}</span> <span class="${colorClass} font-bold">[${ev.stage}]</span> <span class="text-slate-300 flex-1">${ev.msg}</span>`;
+        container.appendChild(row);
+
+        if (fullTable) {
+          const fullRow = row.cloneNode(true);
+          fullTable.appendChild(fullRow);
+        }
+      });
+    }
+
     // Leaflet Init
-    const map = L.map('map', { center: [28.6000, 77.2350], zoom: 13, attributionControl: false });
+    const map = L.map('mainMap', { center: [28.6000, 77.2350], zoom: 13, attributionControl: false });
+    window.map = map;
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-    // Route line
-    L.polyline(WAYPOINTS, { color: '#00e5ff', weight: 6, opacity: 0.8, dashArray: '6, 8' }).addTo(map);
+    // Route Polyline
+    const routeLine = L.polyline(WAYPOINTS, { color: '#00E5FF', weight: 6, opacity: 0.85, dashArray: '6, 8' }).addTo(map);
 
     // Ambulance Marker
     const ambIcon = L.divIcon({
-      className: 'amb-marker-div',
-      html: '<div class="custom-amb-beacon">≡ƒÜæ</div>',
+      className: 'amb-beacon-marker',
+      html: '<div class="amb-beacon">🚑</div>',
       iconSize: [44, 44],
       iconAnchor: [22, 22]
     });
     const ambMarker = L.marker(WAYPOINTS[0], { icon: ambIcon }).addTo(map);
-    ambMarker.bindPopup('<b>ALS-Rescue-09</b><br/>En route to AIIMS Trauma Center');
+    ambMarker.bindPopup('<b>ALS-Rescue-09</b><br/>En Route: AIIMS Trauma Center');
 
     // RSU Markers Map
     const rsuMarkers = {};
     checkpoints.forEach(cp => {
       const icon = L.divIcon({
         className: 'rsu-marker-div',
-        html: `<div id="map-rsu-${cp.id}" class="rsu-badge-marker"><b>${cp.id}</b> | IDLE</div>`,
+        html: `<div id="map-rsu-${cp.id}" class="rsu-node-badge"><b>${cp.id}</b> | IDLE</div>`,
         iconSize: [80, 28],
         iconAnchor: [40, 14]
       });
@@ -375,124 +730,107 @@
       rsuMarkers[cp.id] = marker;
     });
 
-    function addLog(stage, msg, type = 'info') {
-      const container = document.getElementById('eventLogContainer');
-      const time = new Date().toLocaleTimeString();
-      let colorClass = 'text-cyanGlow';
-      if (type === 'alert') colorClass = 'text-redAlert';
-      if (type === 'warning') colorClass = 'text-amberAlert';
-      if (type === 'success') colorClass = 'text-greenSuccess';
-
-      const div = document.createElement('div');
-      div.className = 'p-2.5 rounded-lg bg-surface border border-bordercol/60 text-[11px] text-slate-300';
-      div.innerHTML = `<span class="text-slate-500">${time}</span> <span class="${colorClass} font-bold">[${stage}]</span> ${msg}`;
-      container.insertBefore(div, container.firstChild);
-    }
-
     function selectCheckpoint(id) {
       selectedCpId = id;
-      updatePoliceDesk();
+      const cp = checkpoints.find(c => c.id === id);
+      if (cp) {
+        document.getElementById('polJuncName').innerText = cp.name;
+        document.getElementById('polNodeId').innerText = cp.id;
+        document.getElementById('polStage').innerText = cp.stage;
+        document.getElementById('polSignal').innerText = cp.traffic;
+      }
       renderCheckpoints();
     }
 
-    function acknowledgeSelectedNode() {
-      const cp = checkpoints.find(c => c.id === selectedCpId);
-      if (cp) {
-        cp.ack = true;
-        addLog('ACK', `Traffic officer acknowledged corridor for ${cp.name}.`, 'warning');
-        speakText(`Officer acknowledged ${cp.name}`);
-        updatePoliceDesk();
-        renderCheckpoints();
-      }
-    }
-
-    function preemptSelectedNode() {
-      const cp = checkpoints.find(c => c.id === selectedCpId);
-      if (cp) {
-        cp.traffic = 'PREEMPTED';
-        cp.announcement = 'POLICE OVERRIDE: Cross-traffic held manually.';
-        addLog('OVERRIDE', `Manual signal hold activated at ${cp.name}.`, 'alert');
-        speakText(`Manual preemption applied at ${cp.name}`);
-        updatePoliceDesk();
-        renderCheckpoints();
-      }
-    }
-
-    function updatePoliceDesk() {
-      const cp = checkpoints.find(c => c.id === selectedCpId);
-      if (!cp) return;
-      document.getElementById('selectedRsuId').innerText = cp.id;
-      document.getElementById('selectedJuncName').innerText = cp.name;
-      document.getElementById('selectedSignalState').innerText = cp.traffic;
-      
-      const badge = document.getElementById('selectedAlertBadge');
-      badge.innerText = cp.stage;
-      if (cp.stage === 'APPROACHING') {
-        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amberAlert/20 text-amberAlert border border-amberAlert/40';
-      } else if (cp.stage === 'ARRIVED') {
-        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-redAlert/20 text-redAlert border border-redAlert/40';
-      } else if (cp.stage === 'CLEARED') {
-        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-greenSuccess/20 text-greenSuccess border border-greenSuccess/40';
-      } else {
-        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400';
-      }
-    }
-
     function renderCheckpoints() {
-      const grid = document.getElementById('checkpointGrid');
-      grid.innerHTML = '';
+      const container = document.getElementById('checkpointsContainer');
+      const iotGrid = document.getElementById('iotUnitsGrid');
+      const policeFeed = document.getElementById('policeFeed');
+      const trackingTimeline = document.getElementById('trackingCpTimeline');
+
+      if (container) container.innerHTML = '';
+      if (iotGrid) iotGrid.innerHTML = '';
+      if (policeFeed) policeFeed.innerHTML = '';
+      if (trackingTimeline) trackingTimeline.innerHTML = '';
+
       let activeCount = 0;
 
-      checkpoints.forEach(cp => {
+      checkpoints.forEach((cp, idx) => {
         if (cp.stage === 'APPROACHING' || cp.stage === 'ARRIVED') activeCount++;
-        
-        let borderCol = cp.id === selectedCpId ? 'border-cyanGlow shadow-[0_0_20px_rgba(0,229,255,0.2)]' : 'border-bordercol';
+
+        let borderCol = cp.id === selectedCpId ? 'border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.25)]' : 'border-[#1E3A5F]';
         let badgeCol = 'bg-slate-800 text-slate-400 border-slate-700';
-        if (cp.stage === 'APPROACHING') badgeCol = 'bg-amberAlert/20 text-amberAlert border-amberAlert/50 animate-pulse';
-        if (cp.stage === 'ARRIVED') badgeCol = 'bg-redAlert/20 text-redAlert border-redAlert/50 animate-pulse';
-        if (cp.stage === 'CLEARED') badgeCol = 'bg-greenSuccess/20 text-greenSuccess border-greenSuccess/50';
+        if (cp.stage === 'APPROACHING') badgeCol = 'bg-[#F59E0B]/20 text-[#F59E0B] border-[#F59E0B]/60 animate-pulse';
+        if (cp.stage === 'ARRIVED') badgeCol = 'bg-[#EF4444]/20 text-[#EF4444] border-[#EF4444]/60 animate-pulse';
+        if (cp.stage === 'CLEARED') badgeCol = 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]/60';
 
-        const card = document.createElement('div');
-        card.className = `bg-card p-4 rounded-xl border ${borderCol} transition cursor-pointer`;
-        card.onclick = () => selectCheckpoint(cp.id);
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-bold text-cyanGlow">${cp.id}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full border font-mono font-bold ${badgeCol}">${cp.stage}</span>
+        // 1. Command Center Checkpoint Row
+        if (container) {
+          const row = document.createElement('div');
+          row.className = `p-3.5 rounded-xl border bg-[#0F1F3D] ${borderCol} transition cursor-pointer`;
+          row.onclick = () => selectCheckpoint(cp.id);
+          row.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <span class="w-6 h-6 rounded-full bg-[#070B14] border border-[#1E3A5F] text-[#00E5FF] font-mono text-xs flex items-center justify-center font-bold">${idx + 1}</span>
+                <div>
+                  <h4 class="text-sm font-bold text-white">${cp.name}</h4>
+                  <span class="text-[10px] font-mono text-[#93B2D6]">${cp.id} &bull; Sensor RSSI: -58dBm</span>
+                </div>
               </div>
-              <h4 class="text-sm font-bold text-white mt-1">${cp.name}</h4>
+              <div class="text-right">
+                <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold border ${badgeCol}">${cp.stage}</span>
+                <div class="text-xs font-mono text-[#00E5FF] font-bold mt-1">${cp.eta !== null ? cp.eta + 's' : '--'}</div>
+              </div>
             </div>
-            <div class="text-right">
-              <span class="text-[11px] font-mono text-slate-400">ETA to Junc</span>
-              <div class="text-base font-black font-mono text-cyanGlow">${cp.eta !== null ? cp.eta + 's' : '--'}</div>
+            <div class="mt-2 text-xs font-mono text-slate-400 truncate bg-[#070B14] p-1.5 rounded">
+              🔊 ${cp.announcement}
             </div>
-          </div>
-          <div class="bg-surface p-2 rounded-lg border border-bordercol/70 mb-3 text-xs font-mono text-slate-300 truncate">
-            ≡ƒöè ${cp.announcement}
-          </div>
-          <div class="flex items-center justify-between text-xs font-mono pt-2 border-t border-bordercol/60">
-            <span class="text-slate-400">Signal: <b class="text-amberAlert">${cp.traffic}</b></span>
-            <span class="${cp.ack ? 'text-greenSuccess' : 'text-amberAlert'} font-bold">
-              ${cp.ack ? 'Γ£ô Acknowledged' : 'ΓÜá Action Req'}
-            </span>
-          </div>
-        `;
-        grid.appendChild(card);
+          `;
+          container.appendChild(row);
+        }
 
-        // Update map badge label
+        // 2. IoT Management Card
+        if (iotGrid) {
+          const iotCard = document.createElement('div');
+          iotCard.className = `p-4 rounded-xl border bg-[#0F1F3D] ${borderCol}`;
+          iotCard.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-xs font-mono font-bold text-[#00E5FF]">${cp.id}</span>
+                <h4 class="text-sm font-bold text-white">${cp.name}</h4>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded ${cp.online ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#EF4444]/20 text-[#EF4444]'}">
+                ${cp.online ? 'ONLINE' : 'DISCONNECTED'}
+              </span>
+            </div>
+            <div class="text-xs font-mono text-slate-400 space-y-1 my-2">
+              <div>FSM State: <b class="text-white">${cp.stage}</b></div>
+              <div>Traffic Queue: <b>${(idx * 15 + 30)}m</b></div>
+              <div>Firmware: <b>v2.4.1-esp32</b></div>
+            </div>
+            <div class="pt-2 border-t border-[#1E3A5F] flex gap-2">
+              <button onclick="testIotAlert('${cp.id}')" class="flex-1 py-1.5 bg-[#0B1528] hover:bg-[#1E3A5F] text-[#00E5FF] rounded text-xs font-mono border border-[#1E3A5F]">
+                Test Alert
+              </button>
+            </div>
+          `;
+          iotGrid.appendChild(iotCard);
+        }
+
+        // Update Map Badge
         const mapBadge = document.getElementById(`map-rsu-${cp.id}`);
         if (mapBadge) {
           mapBadge.innerHTML = `<b>${cp.id}</b> | ${cp.stage}`;
-          if (cp.stage === 'APPROACHING') mapBadge.style.borderColor = '#f59e0b';
-          else if (cp.stage === 'ARRIVED') mapBadge.style.borderColor = '#ef4444';
-          else if (cp.stage === 'CLEARED') mapBadge.style.borderColor = '#10b981';
-          else mapBadge.style.borderColor = '#00e5ff';
+          if (cp.stage === 'APPROACHING') mapBadge.style.borderColor = '#F59E0B';
+          else if (cp.stage === 'ARRIVED') mapBadge.style.borderColor = '#EF4444';
+          else if (cp.stage === 'CLEARED') mapBadge.style.borderColor = '#10B981';
+          else mapBadge.style.borderColor = '#00E5FF';
         }
       });
 
-      document.getElementById('activeAlertCount').innerText = `${activeCount} Active Alerts`;
+      const activeBanner = document.getElementById('activeAlertBanner');
+      if (activeBanner) activeBanner.innerText = `${activeCount} Alert(s) Active`;
     }
 
     // Simulation Loop
@@ -504,7 +842,7 @@
         progress = 1.0;
         isPlaying = false;
         document.getElementById('playText').innerText = 'RESTART';
-        speakText('Ambulance arrived at destination AIIMS Trauma Center.');
+        speakText('Ambulance arrived at AIIMS Trauma Center emergency bay.');
       }
 
       const [lat, lng] = getInterpolatedPos(progress);
@@ -512,18 +850,17 @@
 
       const distTraveled = (progress * 12.3).toFixed(1);
       const distRem = Math.max(0, (12.3 - distTraveled)).toFixed(1);
-      const etaSeconds = Math.round((distRem / 48) * 3600);
+      const etaSeconds = Math.round((distRem / speedKmh) * 3600);
 
-      document.getElementById('progressBar').style.width = `${Math.round(progress * 100)}%`;
-      document.getElementById('progressText').innerText = `${Math.round(progress * 100)}% Transit Completed`;
-      document.getElementById('statDist').innerText = `Remaining: ${distRem} km`;
-      document.getElementById('statEta').innerText = `${Math.floor(etaSeconds / 60)}m ${etaSeconds % 60}s`;
-      document.getElementById('statStatus').innerText = progress >= 1.0 ? 'ARRIVED_DESTINATION' : 'EN_ROUTE';
+      document.getElementById('progBar').style.width = `${Math.round(progress * 100)}%`;
+      document.getElementById('kpiEta').innerText = `${Math.floor(etaSeconds / 60)}m ${etaSeconds % 60}s`;
+      document.getElementById('trackEta').innerText = `${Math.floor(etaSeconds / 60)}m ${etaSeconds % 60}s`;
+      document.getElementById('trackDist').innerText = `${distRem} km`;
 
-      // Evaluate Two-Stage Alerts
-      checkpoints.forEach(cp => {
+      // Checkpoint Two-Stage Alerts
+      checkpoints.forEach((cp, i) => {
         const d = haversineKm(lat, lng, cp.lat, cp.lng);
-        const etaJunc = Math.round((d / 48) * 3600);
+        const etaJunc = Math.round((d / speedKmh) * 3600);
         cp.eta = etaJunc;
 
         // Stage 2: Arrived (<100m)
@@ -531,9 +868,9 @@
           if (cp.stage !== 'ARRIVED' && cp.stage !== 'CLEARED') {
             cp.stage = 'ARRIVED';
             cp.traffic = 'PREEMPTED';
-            cp.announcement = 'STAGE 2: Emergency vehicle at junction. Cross-traffic stopped.';
-            speakText(`Stage 2 alert: Ambulance at ${cp.name}`);
-            addLog('STAGE 2', `Arrived at ${cp.name}. Preemption applied.`, 'alert');
+            cp.announcement = 'STAGE 2: Vehicle at threshold. Hold opposing traffic.';
+            speakText(`Stage 2 alert: Ambulance reached ${cp.name}.`);
+            addLog('STAGE 2', `Arrived at ${cp.name}. Cross-traffic held.`, 'alert');
           }
         }
         // Stage 1: Approaching (<750m)
@@ -542,62 +879,159 @@
             cp.stage = 'CLEARED';
             cp.traffic = 'RESTORED';
             cp.announcement = 'Corridor cleared. Signal cycle restored.';
-            speakText(`Ambulance passed ${cp.name}. Normal cycle restored.`);
-            addLog('CLEARED', `Passed ${cp.name}. Traffic restored.`, 'success');
+            speakText(`Ambulance passed ${cp.name}.`);
+            addLog('CLEARED', `Passed ${cp.name}. Cycle restored.`, 'success');
           } else if (cp.stage === 'IDLE') {
             cp.stage = 'APPROACHING';
             cp.traffic = 'PREPARING';
             cp.announcement = `STAGE 1: Approaching in ${etaJunc}s. Clear emergency lane.`;
-            speakText(`Stage 1 alert: Ambulance approaching ${cp.name}`);
-            addLog('STAGE 1', `Approaching ${cp.name} (Lead distance: ${(d*1000).toFixed(0)}m).`, 'warning');
+            speakText(`Stage 1 alert: Ambulance approaching ${cp.name}.`);
+            addLog('STAGE 1', `Approaching ${cp.name} (Lead: ${(d*1000).toFixed(0)}m).`, 'warning');
           }
         }
       });
 
-      updatePoliceDesk();
       renderCheckpoints();
     }, 400);
 
-    // Button Listeners
-    document.getElementById('playBtn').addEventListener('click', () => {
+    // Controls
+    document.getElementById('mainPlayBtn').addEventListener('click', () => {
       if (progress >= 1.0) progress = 0.02;
       isPlaying = !isPlaying;
-      document.getElementById('playText').innerText = isPlaying ? 'PAUSE' : 'RESUME';
-      document.getElementById('playIcon').innerText = isPlaying ? 'ΓÅ╕' : 'Γû╢';
+      document.getElementById('playText').innerText = isPlaying ? 'PAUSE SIMULATION' : 'RESUME SIMULATION';
+      document.getElementById('playIcon').innerText = isPlaying ? '⏸' : '▶';
     });
 
-    document.getElementById('resetBtn').addEventListener('click', () => {
+    function stepSimulation() {
+      progress += 0.02;
+      if (progress > 1.0) progress = 1.0;
+    }
+
+    function resetSimulation() {
       progress = 0.02;
       isPlaying = false;
-      document.getElementById('playText').innerText = 'RESUME';
-      document.getElementById('playIcon').innerText = 'Γû╢';
+      document.getElementById('playText').innerText = 'RESUME SIMULATION';
+      document.getElementById('playIcon').innerText = '▶';
       checkpoints.forEach(cp => {
         cp.stage = 'IDLE';
         cp.traffic = 'NORMAL';
-        cp.ack = false;
         cp.announcement = 'Standby.';
       });
-      updatePoliceDesk();
       renderCheckpoints();
-    });
+    }
 
     document.getElementById('voiceBtn').addEventListener('click', () => {
       voiceAudio = !voiceAudio;
       document.getElementById('voiceStatus').innerText = voiceAudio ? 'ON' : 'OFF';
-      document.getElementById('voiceStatus').className = voiceAudio ? 'font-bold text-cyanGlow' : 'font-bold text-slate-400';
-      document.getElementById('voiceDot').className = voiceAudio ? 'w-2 h-2 rounded-full bg-cyanGlow animate-ping' : 'w-2 h-2 rounded-full bg-slate-500';
-      if (voiceAudio) speakText('Voice PA alerts activated.');
+      document.getElementById('voiceStatus').className = voiceAudio ? 'font-bold text-[#00E5FF]' : 'font-bold text-slate-400';
+      if (voiceAudio) speakText('Audio alerts enabled.');
     });
 
     function setSimSpeed(s) {
       simSpeed = s;
-      document.getElementById('spd1').className = s === 1 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-cyanGlow text-slate-950 font-bold' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-card text-slate-300';
-      document.getElementById('spd2').className = s === 2 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-cyanGlow text-slate-950 font-bold' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-card text-slate-300';
-      document.getElementById('spd4').className = s === 4 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-cyanGlow text-slate-950 font-bold' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-card text-slate-300';
+      document.getElementById('spd1').className = s === 1 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#00E5FF] text-slate-950 font-black' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#0B1528] text-slate-300';
+      document.getElementById('spd2').className = s === 2 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#00E5FF] text-slate-950 font-black' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#0B1528] text-slate-300';
+      document.getElementById('spd4').className = s === 4 ? 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#00E5FF] text-slate-950 font-black' : 'px-2.5 py-0.5 rounded text-xs font-mono bg-[#0B1528] text-slate-300';
     }
 
-    // Initial render
-    updatePoliceDesk();
+    function policeAction(act) {
+      const cp = checkpoints.find(c => c.id === selectedCpId);
+      if (!cp) return;
+      if (act === 'ACK') {
+        cp.ack = true;
+        addLog('POLICE_ACK', `Officer acknowledged alert for ${cp.name}.`, 'warning');
+        speakText(`Officer acknowledged ${cp.name}`);
+      } else if (act === 'PREP') {
+        cp.traffic = 'PREPARING';
+        addLog('POLICE_PREP', `Corridor marked preparing at ${cp.name}.`, 'warning');
+      } else if (act === 'HOLD') {
+        cp.traffic = 'PREEMPTED';
+        addLog('POLICE_HOLD', `Manual signal hold override engaged at ${cp.name}.`, 'alert');
+        speakText(`Manual preemption applied at ${cp.name}`);
+      }
+      renderCheckpoints();
+    }
+
+    function runMlCalc() {
+      const spd = Number(document.getElementById('sliderSpeed').value);
+      const cong = Number(document.getElementById('sliderCong').value);
+      const dst = Number(document.getElementById('sliderDist').value);
+
+      document.getElementById('sliderSpeedVal').innerText = `${spd} km/h`;
+      document.getElementById('sliderCongVal').innerText = `${cong}x`;
+      document.getElementById('sliderDistVal').innerText = `${dst} km`;
+
+      const baseSec = Math.round((dst / spd) * 3600);
+      const mlSec = Math.round(baseSec * (cong ** 0.6) * 1.15 + (roadblock ? 180 : 0));
+
+      document.getElementById('mlBaselineOutput').innerText = `${Math.floor(baseSec / 60)}m ${baseSec % 60}s`;
+      document.getElementById('mlModelOutput').innerText = `${Math.floor(mlSec / 60)}m ${mlSec % 60}s`;
+      document.getElementById('mlRiskOutput').innerText = cong > 2.2 || roadblock ? 'CRITICAL RISK' : cong > 1.5 ? 'MODERATE RISK' : 'LOW RISK';
+    }
+
+    function loadScenario(num) {
+      if (num === 1) {
+        speedKmh = 50;
+        trafficDensity = 1.6;
+        roadblock = false;
+        speakText('Scenario 1 Loaded. Connaught Place to AIIMS corridor.');
+      } else {
+        speedKmh = 35;
+        trafficDensity = 2.8;
+        roadblock = true;
+        speakText('Scenario 2 Loaded. Peak gridlock with roadblock.');
+      }
+      resetSimulation();
+      switchTab('command');
+    }
+
+    function injectRoadblockToggle() {
+      roadblock = !roadblock;
+      addLog('ROADBLOCK', `Roadblock alert ${roadblock ? 'INJECTED' : 'CLEARED'} along corridor.`, 'alert');
+      routeLine.setStyle({ color: roadblock ? '#EF4444' : '#00E5FF' });
+      speakText(`Roadblock alert ${roadblock ? 'injected' : 'cleared'}.`);
+    }
+
+    function toggleIotConnectivity(idx) {
+      if (checkpoints[idx]) {
+        checkpoints[idx].online = !checkpoints[idx].online;
+        addLog('IOT_MESH', `${checkpoints[idx].id} connectivity toggled ${checkpoints[idx].online ? 'ONLINE' : 'OFFLINE'}.`, 'warning');
+        renderCheckpoints();
+      }
+    }
+
+    function testIotAlert(id) {
+      const cp = checkpoints.find(c => c.id === id);
+      if (cp) {
+        addLog('DIAGNOSTIC', `Manual test alert dispatched to ${cp.id} (${cp.name}).`, 'warning');
+        speakText(`Diagnostic alert test on roadside unit ${cp.id}.`);
+      }
+    }
+
+    function exportCSV() {
+      let csv = "Time,Stage,Message\n";
+      events.forEach(e => {
+        csv += `"${e.time}","${e.stage}","${e.msg.replace(/"/g, '""')}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ers_delhi_events_${Date.now()}.csv`;
+      a.click();
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ers_delhi_events_${Date.now()}.json`;
+      a.click();
+    }
+
+    // Initial run
+    addLog('SYSTEM_BOOT', 'ERS Delhi Command Matrix initialized in DEMO MODE. Monitoring 6 RSUs.', 'info');
     renderCheckpoints();
   </script>
 </body>
