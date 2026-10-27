@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ERSState } from '../types';
 import L from 'leaflet';
 import { 
@@ -101,7 +101,7 @@ export const AmbulanceTracking: React.FC<AmbulanceTrackingProps> = ({ state, onN
       const isPassed = !!cp.passed_timestamp;
 
       // Obsidian Command state tokens
-      const haloColor = isArrived ? '#2563EB' : isApproaching ? '#0EA5E9' : isPassed ? '#7DD3FC' : '#2563EB';
+      const haloColor = isArrived ? '#EF4444' : isApproaching ? '#F59E0B' : isPassed ? '#10B981' : '#00E5FF';
       
       const customIcon = L.divIcon({
         className: 'custom-rsu-marker',
@@ -152,9 +152,9 @@ export const AmbulanceTracking: React.FC<AmbulanceTrackingProps> = ({ state, onN
       className: 'ambulance-live-marker',
       html: `
         <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(37, 99, 235, 0.35); animation: ping 1.2s infinite;"></div>
-          <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: #2563EB; border: 2px solid #F0F7FF; box-shadow: 0 0 20px #2563EB, 0 0 35px rgba(56, 189, 248, 0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
-            🚑
+          <div style="position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(239, 68, 68, 0.45); animation: ping 1.2s infinite;"></div>
+          <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: #EF4444; border: 3px solid #FFFFFF; box-shadow: 0 0 25px #EF4444, 0 0 45px rgba(239, 68, 68, 0.8); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+            ??
           </div>
         </div>
       `,

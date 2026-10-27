@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ERSState, IoTDevice, IoTState } from '../types';
 import { ERSApi } from '../services/api';
 import { 
@@ -281,7 +281,7 @@ export const IoTManagement: React.FC<IoTManagementProps> = ({ state, onSpeak }) 
                 onClick={() => setShowPayloadModal(false)}
                 className="text-[#93B2D6] hover:text-[#F0F7FF] font-mono text-sm px-2 py-0.5"
               >
-                ✕
+                ?
               </button>
             </div>
 

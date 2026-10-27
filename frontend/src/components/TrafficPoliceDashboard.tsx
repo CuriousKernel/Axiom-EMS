@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ERSState } from '../types';
 import { ERSApi } from '../services/api';
 import { 
@@ -40,7 +40,7 @@ export const TrafficPoliceDashboard: React.FC<TrafficPoliceDashboardProps> = ({ 
                 <ShieldAlert className="w-5 h-5 animate-pulse" />
               </span>
               <h1 className="text-xl sm:text-2xl font-bold font-hud text-[#F0F7FF] tracking-wider">
-                DELHI TRAFFIC POLICE — EMERGENCY CORRIDOR DISPATCH DESK
+                DELHI TRAFFIC POLICE � EMERGENCY CORRIDOR DISPATCH DESK
               </h1>
             </div>
             <p className="text-[#93B2D6] text-xs sm:text-sm mt-1">

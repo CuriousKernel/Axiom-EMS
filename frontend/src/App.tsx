@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ERSState } from './types';
 import { ERSApi, clientSim } from './services/api';
 import { Navbar } from './components/Navbar';
@@ -16,6 +16,7 @@ export function App() {
   const [state, setState] = useState<ERSState>(clientSim.state);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [voiceAlertsEnabled, setVoiceAlertsEnabled] = useState<boolean>(false);
+  const lastSpokenRef = useRef<string>('');
 
   // Web Speech API Voice Synthesizer
   const speakAnnouncement = useCallback((text: string) => {
@@ -35,14 +36,25 @@ export function App() {
   useEffect(() => {
     const unsubscribe = (newState: ERSState) => {
       setState({ ...newState });
+
+      // Automatically speak when a new announcement triggers
+      const activeIot = newState.iot_devices.find(d => d.speaker_active && d.last_audio_announcement);
+      if (activeIot && activeIot.last_audio_announcement !== lastSpokenRef.current) {
+        lastSpokenRef.current = activeIot.last_audio_announcement;
+        speakAnnouncement(activeIot.last_audio_announcement);
+      }
     };
     clientSim.listeners.push(unsubscribe);
+
+    // Auto-start simulation ticker on initial mount so user sees immediate live telemetry & motion
+    clientSim.startTicker(1600);
 
     return () => {
       const idx = clientSim.listeners.indexOf(unsubscribe);
       if (idx !== -1) clientSim.listeners.splice(idx, 1);
+      clientSim.stopTicker();
     };
-  }, []);
+  }, [speakAnnouncement]);
 
   // Check backend availability and establish WebSocket if available
   useEffect(() => {
@@ -102,7 +114,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050B14] text-[#F0F7FF] flex flex-col font-sans selection:bg-[#38BDF8] selection:text-[#050B14]">
+    <div className="min-h-screen bg-[#070B14] text-[#F0F7FF] flex flex-col font-sans selection:bg-[#00E5FF] selection:text-[#070B14]">
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -175,11 +187,11 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#0B1528] border-t border-[#1E355B] py-4 text-center text-xs font-mono text-[#93B2D6]">
+      <footer className="bg-[#0B1528] border-t border-[#1E3A5F] py-4 text-center text-xs font-mono text-[#93B2D6]">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>AXIOM EMS &bull; Emergency Response Synchronization System &bull; NCT of Delhi, India</span>
           <span className="text-[#93B2D6]/80">
-            DEMO MODE &bull; AI/ML + IoT Roadside Infrastructure Prototype
+            DEMO MODE &bull; AI/ML + IoT Roadside Infrastructure Model
           </span>
         </div>
       </footer>
