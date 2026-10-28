@@ -1,4 +1,4 @@
-# ERS — Emergency Response Synchronization System
+# EMS — Emergency Medical Service Corridor System - Delhi Traffic Police
 ### AI/ML + IoT-Based Intelligent Ambulance Traffic Coordination for Delhi, India
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=flat-square&logo=github)](https://curiouskernel.github.io/Axiom-EMS/)
@@ -23,7 +23,7 @@
 
 Ambulances in Delhi experience severe delays due to arterial congestion, uncoordinated signal cycles, roadblock bottlenecks, and disconnected communication between ambulance drivers and traffic authorities.
 
-**ERS (Emergency Response Synchronization System)** is an operational emergency response command platform designed to coordinate arterial corridors and eliminate avoidable delays during critical "Golden Hour" transit.
+**EMS (Emergency Medical Service Corridor System - Delhi Traffic Police)** is an operational emergency response command platform designed to coordinate arterial corridors and eliminate avoidable delays during critical "Golden Hour" transit.
 
 The system delivers two critical notifications:
 1. **Ambulance Approaching (Stage 1)**: Notifies the relevant intersection in advance, calculating dynamic predicted arrival time, distance to threshold, and recommended traffic-management actions with localized horn speaker announcements.

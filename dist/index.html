@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ERS — Delhi Traffic Police Emergency Corridor System</title>
+  <title>EMS — Emergency Medical Service Corridor System - Delhi Traffic Police</title>
+  <meta name="description" content="EMS — Emergency Medical Service Corridor System - Delhi Traffic Police. AI and IoT-assisted traffic corridor coordination for life-saving transit.">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -83,16 +84,6 @@
       background: #334155;
     }
 
-    /* Radar sweep animation */
-    @keyframes radar-sweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .radar-beam {
-      transform-origin: center center;
-      animation: radar-sweep 4s linear infinite;
-    }
-
     /* Marker Glows */
     .marker-pulse-red {
       box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
@@ -104,6 +95,16 @@
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
+    .marker-pulse-amber {
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+      animation: pulse-ring-amber 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    @keyframes pulse-ring-amber {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+      70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
     .marker-pulse-green {
       box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
       animation: pulse-ring-green 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
@@ -112,6 +113,19 @@
       0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
       70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Popups Dark Style */
+    .custom-dark-popup .leaflet-popup-content-wrapper {
+      background: #0b1323 !important;
+      color: #e2e8f0 !important;
+      border: 1px solid #1e293b !important;
+      border-radius: 8px !important;
+      padding: 0 !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+    }
+    .custom-dark-popup .leaflet-popup-tip {
+      background: #0b1323 !important;
     }
   </style>
 </head>
@@ -157,10 +171,10 @@
             </div>
             <div>
               <div class="flex items-center space-x-1.5">
-                <h1 class="font-extrabold text-base tracking-wider text-white">ERS POLICE</h1>
+                <h1 class="font-extrabold text-base tracking-wider text-white">EMS POLICE</h1>
                 <span class="text-[10px] font-bold px-1.5 py-0.2 bg-blue-500/20 text-blue-400 border border-blue-500/40 rounded">DELHI</span>
               </div>
-              <p class="text-[11px] text-slate-400 font-medium">Emergency Corridor Control</p>
+              <p class="text-[11px] text-slate-400 font-medium">Emergency Medical Service Corridor</p>
             </div>
           </div>
 
@@ -338,15 +352,20 @@
           
           <!-- FOCUSED ROUTE MAP (2 COLUMNS) -->
           <div class="lg:col-span-2 bg-police-850 border border-slate-800 rounded-xl overflow-hidden flex flex-col relative shadow-xl">
-            <!-- Map Overlay Header -->
-            <div class="p-3 bg-police-850/95 border-b border-slate-800 flex items-center justify-between z-10">
+            <!-- Map Overlay Header with Basemap Switcher -->
+            <div class="p-3 bg-police-850/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 z-10">
               <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-                <span class="text-xs font-bold uppercase tracking-wider text-white">Route: Connaught Place &rarr; ITO &rarr; LNJP Hospital</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-white">Route: Connaught Place &rarr; ITO Chowk &rarr; LNJP Hospital</span>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-[11px] text-slate-400">Corridor Stops: 6 Checkpoints</span>
-                <button onclick="recenterMap()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded border border-slate-700 flex items-center space-x-1">
+                <!-- Basemap Switcher -->
+                <div class="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-lg border border-slate-700 text-xs">
+                  <button id="btn-bm-dark" onclick="switchBasemap('dark')" class="px-2 py-0.5 rounded font-bold text-[11px] bg-blue-600 text-white transition-all">🌙 Dark</button>
+                  <button id="btn-bm-voyager" onclick="switchBasemap('voyager')" class="px-2 py-0.5 rounded font-bold text-[11px] text-slate-300 hover:text-white transition-all">☀️ Streets</button>
+                  <button id="btn-bm-positron" onclick="switchBasemap('positron')" class="px-2 py-0.5 rounded font-bold text-[11px] text-slate-300 hover:text-white transition-all">🏙️ Positron</button>
+                </div>
+                <button onclick="recenterMap()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded border border-slate-700 flex items-center space-x-1">
                   <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                   <span>Recenter</span>
                 </button>
@@ -357,18 +376,22 @@
             <div id="map" class="flex-1 w-full h-full min-h-[380px]"></div>
 
             <!-- Map Floating Bottom Legend -->
-            <div class="absolute bottom-3 left-3 bg-police-900/90 backdrop-blur-md border border-slate-800 rounded-lg p-2.5 text-xs z-[400] flex items-center space-x-4">
+            <div class="absolute bottom-3 left-3 bg-police-900/90 backdrop-blur-md border border-slate-800 rounded-lg p-2.5 text-xs z-[400] flex flex-wrap items-center gap-3">
               <div class="flex items-center space-x-1.5">
                 <span class="w-3 h-3 rounded-full bg-red-500 inline-block border border-white/50"></span>
                 <span class="text-slate-300">Ambulance</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-                <span class="text-slate-300">Red Light (Pending Clearance)</span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                <span class="text-slate-300">Traveled Route (Green Wave)</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span class="text-slate-300">Corridor Cleared (Green)</span>
+                <span class="w-3 h-3 rounded-full bg-sky-400 inline-block"></span>
+                <span class="text-slate-300">Route Ahead</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                <span class="text-slate-300">Pending Police Action</span>
               </div>
             </div>
           </div>
@@ -636,6 +659,7 @@
       {
         id: 1,
         name: "Connaught Place (Inner Circle)",
+        shortName: "Connaught Place",
         lat: 28.6328,
         lng: 77.2195,
         crowd: "Normal",
@@ -643,11 +667,13 @@
         light: "green", // 'red', 'yellow', 'green'
         distFromStart: 0,
         iotDevice: "IOT-CP-01",
-        description: "Pickup Checkpoint / Corridor Entrance"
+        description: "Emergency Pickup / Corridor Departure Gate",
+        isStart: true
       },
       {
         id: 2,
         name: "Barakhamba Road Crossing",
+        shortName: "Barakhamba Rd",
         lat: 28.6295,
         lng: 77.2268,
         crowd: "Normal",
@@ -660,6 +686,7 @@
       {
         id: 3,
         name: "Mandi House Roundabout",
+        shortName: "Mandi House",
         lat: 28.6258,
         lng: 77.2345,
         crowd: "Heavy",
@@ -672,6 +699,7 @@
       {
         id: 4,
         name: "Tilak Marg / Supreme Court",
+        shortName: "Supreme Court",
         lat: 28.6212,
         lng: 77.2398,
         crowd: "Normal",
@@ -684,6 +712,7 @@
       {
         id: 5,
         name: "ITO Chowk (Vikas Marg)",
+        shortName: "ITO Chowk",
         lat: 28.6288,
         lng: 77.2415,
         crowd: "Critical",
@@ -696,6 +725,7 @@
       {
         id: 6,
         name: "Delhi Gate / LNJP Emergency",
+        shortName: "LNJP Hospital",
         lat: 28.6385,
         lng: 77.2410,
         crowd: "Normal",
@@ -703,7 +733,8 @@
         light: "green",
         distFromStart: 4.8,
         iotDevice: "IOT-DG-06",
-        description: "Destination Hospital Red Light Gate"
+        description: "Destination Hospital Red Light Gate",
+        isHospital: true
       }
     ];
 
@@ -724,6 +755,8 @@
 
     // State Variables
     let map = null;
+    let baseTileLayer = null;
+    let shadowPolyline = null;
     let routePolyline = null;
     let progressPolyline = null;
     let ambulanceMarker = null;
@@ -734,6 +767,15 @@
     let currentStep = 0;
     const totalSteps = 240; // smoothly divided along the route
     let currentFilter = 'all';
+    let currentBearing = 0;
+    let currentBasemap = 'dark';
+
+    // Basemap URLs
+    const BASEMAP_TILES = {
+      dark: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png',
+      voyager: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+      positron: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png'
+    };
 
     // --- INITIALIZE LEAFLET MAP ---
     function initMap() {
@@ -743,8 +785,8 @@
         attributionControl: false
       }).setView([28.6288, 77.2345], 14);
 
-      // Clean, high-clarity Dark Matter tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png', {
+      // Add Base Tile Layer
+      baseTileLayer = L.tileLayer(BASEMAP_TILES.dark, {
         maxZoom: 19,
         subdomains: 'abcd'
       }).addTo(map);
@@ -752,114 +794,210 @@
       // Add Zoom Control to top right
       L.control.zoom({ position: 'topright' }).addTo(map);
 
-      // Outer glow polyline (background)
-      L.polyline(ROUTE_COORDS, {
-        color: '#06b6d4',
-        weight: 8,
-        opacity: 0.25,
+      // Soft Shadow Outline Polyline (Gives depth to the road)
+      shadowPolyline = L.polyline(ROUTE_COORDS, {
+        color: '#0284c7',
+        weight: 10,
+        opacity: 0.35,
         lineCap: 'round',
         lineJoin: 'round'
       }).addTo(map);
 
-      // Main route polyline
+      // Ahead Route Polyline (High-visibility sky blue dashed line)
       routePolyline = L.polyline(ROUTE_COORDS, {
-        color: '#3b82f6',
-        weight: 4,
+        color: '#38bdf8',
+        weight: 5,
         opacity: 0.85,
-        dashArray: '6, 6'
+        dashArray: '8, 8',
+        lineCap: 'round',
+        lineJoin: 'round'
       }).addTo(map);
 
-      // Progress polyline (covered path)
+      // Traveled Path Polyline (Vivid emerald green wave)
       progressPolyline = L.polyline([], {
         color: '#10b981',
-        weight: 5,
-        opacity: 0.95
+        weight: 6,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
       }).addTo(map);
 
-      // Add Stop Markers
+      // Add Checkpoint Stop Markers
       renderStopMarkers();
 
-      // Add Ambulance Marker
+      // Add Custom Heading-Rotated Ambulance Marker
       const ambIcon = L.divIcon({
-        className: 'custom-amb-marker',
+        className: 'custom-amb-container',
         html: `
-          <div class="relative flex items-center justify-center">
-            <div class="absolute w-9 h-9 rounded-full bg-red-600/40 animate-ping"></div>
-            <div class="w-8 h-8 rounded-full bg-red-600 border-2 border-white flex items-center justify-center shadow-lg shadow-red-600/80">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
-                <circle cx="7" cy="17" r="2"/>
-                <path d="M9 17h6"/>
-                <circle cx="17" cy="17" r="2"/>
+          <div class="relative flex items-center justify-center w-10 h-10">
+            <!-- Pulsing siren ripple -->
+            <div class="absolute -inset-2 rounded-full bg-red-600/30 animate-ping pointer-events-none"></div>
+            <div class="absolute -inset-1 rounded-full bg-blue-600/30 animate-pulse pointer-events-none"></div>
+            
+            <!-- Vehicle SVG that rotates with travel heading -->
+            <div id="ambulanceRotator" style="transform: rotate(115deg); transform-origin: center center; transition: transform 0.15s linear;" class="w-10 h-10 flex items-center justify-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
+              <svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Forward Headlight Beams -->
+                <polygon points="15,6 3,-10 37,-10 25,6" fill="rgba(254, 240, 138, 0.35)"/>
+                <!-- Van Body -->
+                <rect x="11" y="6" width="18" height="28" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
+                <!-- Front Windshield -->
+                <path d="M13.5 11.5 C13.5 9 15.5 8 20 8 C24.5 8 26.5 9 26.5 11.5 L25.5 14.5 L14.5 14.5 Z" fill="#0284c7"/>
+                <!-- Red Cross on Roof -->
+                <rect x="18" y="17" width="4" height="10" rx="0.8" fill="#ef4444"/>
+                <rect x="15" y="20" width="10" height="4" rx="0.8" fill="#ef4444"/>
+                <!-- Flashing Lightbar -->
+                <rect x="13.5" y="6" width="5.5" height="2.2" rx="0.8" fill="#ef4444"/>
+                <rect x="21" y="6" width="5.5" height="2.2" rx="0.8" fill="#3b82f6"/>
+                <!-- Rear Window Panes -->
+                <rect x="13.5" y="30.5" width="5" height="1.8" rx="0.6" fill="#334155"/>
+                <rect x="21.5" y="30.5" width="5" height="1.8" rx="0.6" fill="#334155"/>
               </svg>
             </div>
           </div>
         `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
       });
 
-      ambulanceMarker = L.marker(ROUTE_COORDS[0], { icon: ambIcon, zIndexOffset: 1000 }).addTo(map);
+      ambulanceMarker = L.marker(ROUTE_COORDS[0], { icon: ambIcon, zIndexOffset: 1500 }).addTo(map);
 
       // Fit map tightly around the route
-      map.fitBounds(routePolyline.getBounds(), { padding: [35, 35] });
+      map.fitBounds(routePolyline.getBounds(), { padding: [45, 45] });
+    }
+
+    // --- BASEMAP SWITCHER ---
+    function switchBasemap(type) {
+      if (!BASEMAP_TILES[type] || !baseTileLayer) return;
+      currentBasemap = type;
+      baseTileLayer.setUrl(BASEMAP_TILES[type]);
+
+      ['dark', 'voyager', 'positron'].forEach(t => {
+        const btn = document.getElementById(`btn-bm-${t}`);
+        if (btn) {
+          if (t === type) {
+            btn.className = 'px-2 py-0.5 rounded font-bold text-[11px] bg-blue-600 text-white transition-all';
+          } else {
+            btn.className = 'px-2 py-0.5 rounded font-bold text-[11px] text-slate-300 hover:text-white transition-all';
+          }
+        }
+      });
+      showNotification(`Map view switched to ${type.toUpperCase()}`);
+    }
+
+    // --- BEARING CALCULATION FOR ROTATING AMBULANCE ---
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+      const dLng = (lng2 - lng1) * (Math.PI / 180);
+      const y = Math.sin(dLng) * Math.cos(lat2 * (Math.PI / 180));
+      const x = Math.cos(lat1 * (Math.PI / 180)) * Math.sin(lat2 * (Math.PI / 180)) -
+                Math.sin(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.cos(dLng);
+      let brng = Math.atan2(y, x) * (180 / Math.PI);
+      return (brng + 360) % 360;
     }
 
     // --- RENDER CHECKPOINT / RED LIGHT MARKERS ON MAP ---
     function renderStopMarkers() {
-      // Remove old markers
       stopMarkers.forEach(m => map.removeLayer(m));
       stopMarkers = [];
 
       STOPS_DATA.forEach((stop, index) => {
-        let pinColor = '#10b981'; // Green
-        let pulseClass = '';
-        let lightText = '🟢';
+        let iconHtml = '';
 
-        if (stop.status === 'pending') {
-          if (stop.crowd === 'Critical') {
-            pinColor = '#ef4444'; // Red
-            pulseClass = 'marker-pulse-red';
-            lightText = '🔴';
-          } else {
-            pinColor = '#f59e0b'; // Amber
-            lightText = '🟡';
-          }
+        if (stop.isStart) {
+          // Special Start Point Pin (Connaught Place Departure Gate)
+          iconHtml = `
+            <div class="relative group cursor-pointer flex flex-col items-center" onclick="openPoliceDeskForStop(${stop.id})">
+              <div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white shadow-xl flex items-center justify-center text-white font-extrabold text-xs marker-pulse-green">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-white" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              </div>
+              <div class="absolute -top-7 whitespace-nowrap bg-slate-900/95 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/60 shadow pointer-events-none">
+                🚩 Start: Connaught Place
+              </div>
+            </div>
+          `;
+        } else if (stop.isHospital) {
+          // Special Hospital Destination Pin (LNJP Hospital Emergency Bay)
+          iconHtml = `
+            <div class="relative group cursor-pointer flex flex-col items-center" onclick="openPoliceDeskForStop(${stop.id})">
+              <div class="w-9 h-9 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center text-white font-extrabold text-sm marker-pulse-red relative">
+                <span class="text-white font-black text-base leading-none">H</span>
+                <span class="absolute -top-1.5 -right-1.5 text-xs">🏥</span>
+              </div>
+              <div class="absolute -top-7 whitespace-nowrap bg-slate-900/95 text-red-200 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/60 shadow pointer-events-none">
+                🏥 LNJP Hospital Emergency Bay
+              </div>
+            </div>
+          `;
         } else {
-          pulseClass = 'marker-pulse-green';
-        }
+          // Numbered Red-Light Checkpoints (Stops 2, 3, 4, 5)
+          let pinColor = '#10b981'; // Green
+          let pulseClass = '';
+          let lightColor = '#10b981';
 
-        const iconHtml = `
-          <div class="group relative cursor-pointer" onclick="openPoliceDeskForStop(${stop.id})">
-            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-lg border-2 border-slate-900 ${pulseClass}" style="background-color: ${pinColor}">
-              ${stop.id}
+          if (stop.status === 'pending') {
+            if (stop.crowd === 'Critical') {
+              pinColor = '#ef4444'; // Red
+              pulseClass = 'marker-pulse-red';
+              lightColor = '#ef4444';
+            } else {
+              pinColor = '#f59e0b'; // Amber
+              pulseClass = 'marker-pulse-amber';
+              lightColor = '#f59e0b';
+            }
+          } else {
+            pulseClass = 'marker-pulse-green';
+          }
+
+          iconHtml = `
+            <div class="relative group cursor-pointer flex flex-col items-center" onclick="openPoliceDeskForStop(${stop.id})">
+              <!-- Stop Circle with Number -->
+              <div class="w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-xs text-white shadow-xl border-2 border-slate-950 ${pulseClass}" style="background-color: ${pinColor}">
+                ${stop.id}
+              </div>
+              <!-- Mini Traffic Light Bezel -->
+              <div class="absolute -top-1 -right-1 w-3 h-3 rounded-full border border-slate-950 shadow" style="background-color: ${lightColor}"></div>
+              <!-- Clear Label Badge with Stop Name -->
+              <div class="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/95 text-[10px] font-bold text-slate-200 px-2 py-0.5 rounded border border-slate-700 shadow pointer-events-none flex items-center space-x-1">
+                <span>Stop ${stop.id}: ${stop.shortName || stop.name}</span>
+                <span class="${stop.status === 'pending' ? (stop.crowd === 'Critical' ? 'text-red-400' : 'text-amber-400') : 'text-emerald-400'}">(${stop.status === 'pending' ? 'Pending' : 'Cleared'})</span>
+              </div>
             </div>
-            <div class="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-[10px] font-bold text-slate-200 px-1.5 py-0.5 rounded border border-slate-700 shadow pointer-events-none">
-              ${lightText} ${stop.name.split(' ')[0]}
-            </div>
-          </div>
-        `;
+          `;
+        }
 
         const stopIcon = L.divIcon({
           className: 'custom-stop-marker',
           html: iconHtml,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
 
         const marker = L.marker([stop.lat, stop.lng], { icon: stopIcon }).addTo(map);
         
         marker.bindPopup(`
-          <div class="p-2 text-xs bg-slate-900 text-white rounded">
-            <p class="font-bold text-sm text-cyan-400">${stop.name}</p>
-            <p class="text-slate-300 mt-1">${stop.description}</p>
-            <div class="mt-2 flex justify-between items-center text-[11px]">
-              <span>Crowd: <strong class="${stop.crowd === 'Critical' ? 'text-red-400' : 'text-emerald-400'}">${stop.crowd}</strong></span>
-              <span>Status: <strong class="${stop.status === 'pending' ? 'text-amber-400' : 'text-emerald-400'}">${stop.status.toUpperCase()}</strong></span>
+          <div class="p-3 text-xs bg-slate-900 text-white rounded-lg min-w-[200px]">
+            <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+              <span class="font-extrabold text-cyan-400">${stop.name}</span>
+              <span class="text-[10px] font-mono-num text-slate-400">#${stop.id}</span>
+            </div>
+            <p class="text-slate-300 mt-1.5 text-[11px]">${stop.description}</p>
+            <div class="mt-2.5 p-2 bg-slate-950 rounded border border-slate-800 space-y-1 text-[11px]">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Crowd Density:</span>
+                <strong class="${stop.crowd === 'Critical' ? 'text-red-400 font-extrabold' : stop.crowd === 'Heavy' ? 'text-amber-400' : 'text-emerald-400'}">${stop.crowd}</strong>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Signal Phasing:</span>
+                <strong class="uppercase ${stop.light === 'green' ? 'text-emerald-400' : stop.light === 'yellow' ? 'text-amber-400' : 'text-red-400'}">${stop.light}</strong>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Police Status:</span>
+                <strong class="uppercase ${stop.status === 'pending' ? 'text-red-400' : 'text-emerald-400'}">${stop.status}</strong>
+              </div>
             </div>
             ${stop.status === 'pending' ? `
-              <button onclick="resolvePoliceAction(${stop.id})" class="mt-2 w-full py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[10px]">
-                Clear This Stop (Police Action)
+              <button onclick="resolvePoliceAction(${stop.id})" class="mt-2.5 w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[10px] shadow flex items-center justify-center space-x-1">
+                <span>CLEAR STOP & TURN SIGNAL GREEN</span>
               </button>
             ` : ''}
           </div>
@@ -872,7 +1010,7 @@
     // --- RECENTER MAP ---
     function recenterMap() {
       if (map && routePolyline) {
-        map.fitBounds(routePolyline.getBounds(), { padding: [40, 40] });
+        map.fitBounds(routePolyline.getBounds(), { padding: [45, 45] });
       }
     }
 
@@ -895,6 +1033,16 @@
       return [lat, lng];
     }
 
+    // Calculate heading bearing at fraction
+    function getBearingAtFraction(fraction) {
+      const currentPos = getInterpolatedPoint(fraction);
+      const nextPos = getInterpolatedPoint(Math.min(1, fraction + 0.015));
+      if (currentPos[0] === nextPos[0] && currentPos[1] === nextPos[1]) {
+        return currentBearing;
+      }
+      return calculateBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
+    }
+
     // --- SIMULATION TICK LOOP ---
     function simTick() {
       if (!isSimulating) return;
@@ -912,7 +1060,15 @@
         ambulanceMarker.setLatLng(currentPos);
       }
 
-      // Update covered path polyline
+      // Rotate Ambulance to match road bearing
+      const bearing = getBearingAtFraction(fraction);
+      currentBearing = bearing;
+      const rotatorEl = document.getElementById('ambulanceRotator');
+      if (rotatorEl) {
+        rotatorEl.style.transform = `rotate(${Math.round(bearing)}deg)`;
+      }
+
+      // Update covered path polyline (traveled part in green)
       const coveredCoords = [];
       const segmentCount = ROUTE_COORDS.length - 1;
       const exactIndex = fraction * segmentCount;
@@ -1272,7 +1428,6 @@
 
     function openPoliceDeskForStop(stopId) {
       switchTab('police');
-      // Scroll to that card
       renderPoliceAlerts('all');
     }
 
